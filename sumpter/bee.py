@@ -8,4 +8,7 @@ class Bee:
         self.x = x
         self.y = y
         self.met_rate = 0
+    
+    def update(self):
+        return
 

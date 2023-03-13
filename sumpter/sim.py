@@ -29,5 +29,5 @@ class Sim:
 
 
 sim = Sim(dims_draw,dims_b,dims_temp,12)
-time.sleep(15)
+time.sleep(10)
 sim.end()

@@ -8,11 +8,11 @@ def init_world(app):
     app.background(0,0,0)
 
 def get_hue(temp):
-    hue = 240 - 6*temp
+    hue = 240 - 8*temp
     return hue
 
 def init_temp(app,hive):
-    step = 10
+    step = 1
     grid_res = [step*app.width/hive.temp.dims[1],step*app.height/hive.temp.dims[0]]
     app.colorMode(HSB, 360, MAX_VAL, MAX_VAL)
 
@@ -36,7 +36,7 @@ def init_temp(app,hive):
             app.fill(hue,MAX_VAL,MAX_VAL)
             app.stroke(hue,MAX_VAL,MAX_VAL)
             app.rect(x,y,grid_res[0],grid_res[1])
-            
+
     app.stroke(0,0,0)
     app.fill(0,0,MAX_VAL)
 

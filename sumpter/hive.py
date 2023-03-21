@@ -2,6 +2,7 @@ import numpy as np
 import random
 from bee import Bee
 from temp_field import TempField
+import keyboard
 
 class Hive:
     def __init__(self, param):
@@ -17,38 +18,62 @@ class Hive:
         #temperature field initialization
         #self.temp = TempField(param["temp_param"])
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
-        self.dims_temp = param["dims_temp"]
-        
+        self.dims_temp = param["dims_temp"]        
         self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
+        self.currTmax = param['tempA']
 
         #bee initialization
         self.beeGrid = np.zeros(self.dims_b)
         bs = []
         for i in range(param["n_bees"]):
-            r = 7*random.random()
-            theta = 2*np.pi*random.random()
-            x = int(r*np.cos(theta))+self.dims_b[0]//2
-            y = int(r*np.sin(theta))+self.dims_b[1]//2
-            while self.beeGrid[x,y]!=0:
-                r = 10*random.random()
+            if param["init_shape"]=="disc":
+            # initially in disc offset from corner
+                offset = (self.dims_b[0]//3,self.dims_b[1]//4)
+                r = 7*random.random()
                 theta = 2*np.pi*random.random()
-                x = int(r*np.cos(theta))+self.dims_b[0]//2
-                y = int(r*np.sin(theta))+self.dims_b[1]//2
+                i_b = int(r*np.cos(theta))+offset[0]
+                j_b = int(r*np.sin(theta))+offset[1]
+                while self.beeGrid[i_b,j_b]!=0:
+                    r = 10*random.random()
+                    theta = 2*np.pi*random.random()
+                    i_b = int(r*np.cos(theta))+offset[0]
+                    j_b = int(r*np.sin(theta))+offset[1]
 
-            '''x = int(random.random()*self.dims_b[0])
-            y = int(random.random()*self.dims_b[1])
-            while self.beeGrid[x,y]!=0:
-                x = int(random.random()*self.dims_b[0])
-                y = int(random.random()*self.dims_b[1])'''
+            elif param["init_shape"]=="ring":
+                # initially in ring in middle
+                r = 7*random.random()
+                theta = 2*np.pi*random.random()
+                i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
+                j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
+                while self.beeGrid[i_b,j_b]!=0:
+                    r = 10*random.random()
+                    theta = 2*np.pi*random.random()
+                    i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
+                    j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
+
+            else:
+                # random initialization across grid
+                i_b = int(random.random()*self.dims_b[0])
+                j_b = int(random.random()*self.dims_b[1])
+                while self.beeGrid[i_b,j_b]!=0:
+                    i_b = int(random.random()*self.dims_b[0])
+                    j_b = int(random.random()*self.dims_b[1])
             
-            self.beeGrid[x,y] = 1
+            self.beeGrid[i_b,j_b] = 1
             
-            print(i," : ",x, ", ",y)
-            bs.append(Bee(x,y,param["bee_param"]))
+            print(i," : ",i_b, ", ",j_b)
+            bs.append(Bee(i_b,j_b,param["bee_param"]))
             
         # for i in range(param["n_bees"]):
         #     bs.append(Bee(int(random.random()*self.dims_b[0]),int(random.random()*self.dims_b[1])))
         self.colony = np.array(bs)
+
+        self.init_temp()
+
+
+    def init_temp(self):
+        for i in range(300):
+            self.update_temp()
 
     def f(self,i,j):
         if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=0)):
@@ -75,13 +100,16 @@ class Hive:
     def update(self):
         for t in range(self.tau):
             self.update_temp()
+        self.currTmax=np.amax(self.tempField)
         self.compute_Tbee()
         for b in self.colony:
             b.update(self.beeTempField,self.beeGrid)
+            #keyboard.wait('r')
+        
     
     def compute_Tbee(self):
         for x in range(1,self.dims_b[0]-1):
             for y in range(1,self.dims_b[1]-1):
-                self.beeTempField[x,y] = sum(self.tempField[self.g*x:self.g*(x+1),self.g*y:self.g*(y+1)])
+                self.beeTempField[x,y] = sum(sum(self.tempField[self.g*x:self.g*(x+1),self.g*y:self.g*(y+1)]))/(self.g**2)
     
     

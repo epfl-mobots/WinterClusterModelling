@@ -4,12 +4,8 @@ import numpy as np
 import keyboard
 
 from hive import Hive
-from temp_field import TempField
-from sim_parameters import SimParam
 import draw
 
-
-SIM_TIME=200 #in bee timesteps
 
 class Sim:
     def __init__(self,sim_param,hive_param,draw_on=True):
@@ -28,7 +24,7 @@ class Sim:
     def update(self):
         self.hive.update()
         self.count+=1
-        if self.draw_on and self.count%10==0:
+        if self.draw_on and self.count%DRAW_T==0:
             draw.update(self.app,self.hive)
     
     def end(self):
@@ -43,7 +39,9 @@ sim_param = {
 bee_param = {
     "Tcoma" : 8,
     "TminI" : 18,
-    "TmaxI" : 23
+    "TmaxI" : 23,
+    "xmax"  : 49,
+    "ymax"  : 49
 }
 
 temp_param = {
@@ -54,6 +52,7 @@ temp_param = {
 }
 
 hive_param = {
+    "init_shape" : "random",
     "dims_b" : (50,50),
     "n_bees" : 100,
     "tau" : 8,
@@ -67,10 +66,13 @@ hive_param = {
     "gamma" : np.log(2.4)/10
 }
 
+SIM_TIME = 100 #in bee timesteps
+DRAW_T = 5 #the simulation is redrawn every DRAW_T steps
+
 sim = Sim(sim_param,hive_param,draw_on=True)
 for i in range(SIM_TIME):
     sim.update()
     print(i)
-    time.sleep(0.01)
+
 keyboard.wait('q')
 sim.end()

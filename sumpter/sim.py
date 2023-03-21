@@ -1,5 +1,7 @@
 from processing_py import *
 import time
+import numpy as np
+import keyboard
 
 from hive import Hive
 from temp_field import TempField
@@ -7,15 +9,16 @@ from sim_parameters import SimParam
 import draw
 
 
-SIM_TIME=1000 #in bee timesteps
+SIM_TIME=200 #in bee timesteps
 
 class Sim:
     def __init__(self,sim_param,hive_param,draw_on=True):
         self.hive = Hive(hive_param)
         self.draw_on = draw_on
         if draw_on:
-            self.app = App(sim_param["dims_draw"][0],sim_param["dims_draw"][1])        
+            self.app = App(sim_param["dims_draw"][0],sim_param["dims_draw"][1])
             self.start_graphic()
+        self.count=0
     
     def start_graphic(self):
         draw.init_world(self.app)
@@ -24,8 +27,9 @@ class Sim:
 
     def update(self):
         self.hive.update()
-        if self.draw_on:
-            draw.update(self.hive)
+        self.count+=1
+        if self.draw_on and self.count%10==0:
+            draw.update(self.app,self.hive)
     
     def end(self):
         if self.draw_on:
@@ -55,11 +59,18 @@ hive_param = {
     "tau" : 8,
     "g" : 2,
     "bee_param" : bee_param,
-    "temp_param" : temp_param
+    "dims_temp" : (100,100), #twice as big as dims_b in Sumpter (twice finer grid)
+    "tempA" : 12,
+    "lambda_air" : 1.0,
+    "lambda_bee" : 0.45,
+    "hq20" : 0.0037,
+    "gamma" : np.log(2.4)/10
 }
 
 sim = Sim(sim_param,hive_param,draw_on=True)
 for i in range(SIM_TIME):
     sim.update()
-time.sleep(10)
+    print(i)
+    time.sleep(0.01)
+keyboard.wait('q')
 sim.end()

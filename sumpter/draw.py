@@ -8,12 +8,12 @@ def init_world(app):
     app.background(0,0,0)
 
 def get_hue(temp):
-    hue = 240 - 8*temp
+    hue = 6000-480*temp#240 - 8*temp
     return hue
 
 def init_temp(app,hive):
     step = 1
-    grid_res = [step*app.width/hive.temp.dims[1],step*app.height/hive.temp.dims[0]]
+    grid_res = [step*app.width/hive.dims_temp[1],step*app.height/hive.dims_temp[0]]
     app.colorMode(HSB, 360, MAX_VAL, MAX_VAL)
 
     # i = 3
@@ -27,12 +27,12 @@ def init_temp(app,hive):
     # app.rect(x,y,20,20)
     # app.fill(0,0,MAX_VAL)
 
-    for i in range(hive.temp.dims[0]//step):
-        for j in range(hive.temp.dims[1]//step):
+    for i in range(hive.dims_temp[0]//step):
+        for j in range(hive.dims_temp[1]//step):
             x = j*grid_res[0]
             y = app.height - (i+1)*grid_res[1]
 
-            hue = get_hue(hive.temp.field[step*i,step*j])
+            hue = get_hue(hive.tempField[step*i,step*j])
             app.fill(hue,MAX_VAL,MAX_VAL)
             app.stroke(hue,MAX_VAL,MAX_VAL)
             app.rect(x,y,grid_res[0],grid_res[1])
@@ -48,5 +48,6 @@ def init_colony(app,hive):
         app.ellipse(x_draw,y_draw,SIZE_BEE,SIZE_BEE)
     app.redraw()
 
-def update(app):
-    return
+def update(app,hive):
+    init_temp(app,hive)
+    init_colony(app,hive)

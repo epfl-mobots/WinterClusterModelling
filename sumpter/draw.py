@@ -16,6 +16,25 @@ def init_temp(app,hive):
     grid_res = [step*app.width/hive.dims_temp[1],step*app.height/hive.dims_temp[0]]
     app.colorMode(HSB, 360, MAX_VAL, MAX_VAL)
 
+    for i in range(hive.dims_temp[0]//step):
+        for j in range(hive.dims_temp[1]//step):
+            x = (j-0.5)*grid_res[0]
+            y = app.height - (i+1-0.5)*grid_res[1]
+
+            hue = get_hue(hive.tempField[step*i,step*j])
+            app.fill(hue,MAX_VAL,MAX_VAL)
+            app.stroke(hue,MAX_VAL,MAX_VAL)
+            app.rect(x,y,grid_res[0],grid_res[1])
+
+
+    app.stroke(0,0,0)
+    app.fill(0,0,MAX_VAL)
+
+# def init_temp_old(app,hive):
+#     step = 1
+#     grid_res = [step*app.width/hive.dims_temp[1],step*app.height/hive.dims_temp[0]]
+#     app.colorMode(HSB, 360, MAX_VAL, MAX_VAL)
+
     # i = 3
     # j = 3
     # x = j*grid_res[0]
@@ -27,38 +46,19 @@ def init_temp(app,hive):
     # app.rect(x,y,20,20)
     # app.fill(0,0,MAX_VAL)
 
-    for i in range(hive.dims_temp[0]//step):
-        for j in range(hive.dims_temp[1]//step):
-            x = j*grid_res[0]
-            y = app.height - (i+1)*grid_res[1]
+#     for i in range(hive.dims_temp[0]//step):
+#         for j in range(hive.dims_temp[1]//step):
+#             x = j*grid_res[0]
+#             y = app.height - (i+1)*grid_res[1]
 
-            hue = get_hue(hive.tempField[step*i,step*j])
-            app.fill(hue,MAX_VAL,MAX_VAL)
-            app.stroke(hue,MAX_VAL,MAX_VAL)
-            app.rect(x,y,grid_res[0],grid_res[1])
-
-
-    app.stroke(0,0,0)
-    app.fill(0,0,MAX_VAL)
-
-def init_temp_old(app,hive):
-    step = 1
-    grid_res = [step*app.width/hive.dims_temp[1],step*app.height/hive.dims_temp[0]]
-    app.colorMode(HSB, 360, MAX_VAL, MAX_VAL)
-
-    for i in range(hive.dims_temp[0]//step):
-        for j in range(hive.dims_temp[1]//step):
-            x = j*grid_res[0]
-            y = app.height - (i+1)*grid_res[1]
-
-            hue = get_hue(hive.tempField[step*i,step*j])
-            app.fill(hue,MAX_VAL,MAX_VAL)
-            app.stroke(hue,MAX_VAL,MAX_VAL)
-            app.rect(x,y,grid_res[0],grid_res[1])
+#             hue = get_hue(hive.tempField[step*i,step*j])
+#             app.fill(hue,MAX_VAL,MAX_VAL)
+#             app.stroke(hue,MAX_VAL,MAX_VAL)
+#             app.rect(x,y,grid_res[0],grid_res[1])
 
 
-    app.stroke(0,0,0)
-    app.fill(0,0,MAX_VAL)
+#     app.stroke(0,0,0)
+#     app.fill(0,0,MAX_VAL)
 
 def init_colony(app,hive):
     for b in hive.colony:

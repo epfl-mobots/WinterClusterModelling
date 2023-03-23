@@ -66,8 +66,8 @@ hive_param = {
     "gamma" : np.log(2.4)/10
 }
 
-SIM_TIME = 100 #in bee timesteps
-DRAW_T = 5 #the simulation is redrawn every DRAW_T steps
+SIM_TIME = 500 #in bee timesteps
+DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
 
 sim = Sim(sim_param,hive_param,draw_on=True)
 for i in range(SIM_TIME):

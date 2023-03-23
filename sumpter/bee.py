@@ -14,7 +14,7 @@ class Bee:
     
 
     def update(self,tempField,beeGrid):
-        # print("initial position : ",self.i, " ", self.j)
+        # print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])
         if tempField[self.i,self.j]<self.Tcoma:
             return
         else:
@@ -22,18 +22,16 @@ class Bee:
             xy_TI = []
             xy_free = []
             temp_free = []
-            for xp in range(self.i-1,self.i+1):
-                if xp<1 or xp>self.imax:
+            for xp,yp in zip([self.i-1,self.i,self.i+1,self.i],[self.j,self.j-1,self.j,self.j+1]):
+                if yp<1 or yp>self.jmax or xp<1 or xp>self.imax:
                     continue
-                for yp in range(self.j-1,self.j+1):
-                    if yp<1 or yp>self.jmax:
-                        continue
-                    if beeGrid[xp,yp]==0 and not(xp==self.i and yp==self.j):
-                        if tempField[xp,yp]<=self.TmaxI and tempField[xp,yp]>=self.TminI:
-                            xy_TI.append([xp,yp])
-                        else:
-                            xy_free.append([xp,yp])
-                            temp_free.append(abs(tempField[xp,yp]-0.5*(self.TmaxI+self.TminI)))
+                if beeGrid[xp,yp]==0 and not(xp==self.i and yp==self.j):
+                    # print("[",xp,",",yp,"]:",tempField[xp,yp])
+                    if tempField[xp,yp]<=self.TmaxI and tempField[xp,yp]>=self.TminI:
+                        xy_TI.append([xp,yp])
+                    else:
+                        xy_free.append([xp,yp])
+                        temp_free.append(abs(tempField[xp,yp]-0.5*(self.TmaxI+self.TminI)))
             if xy_TI:
                 if len(xy_TI)==1:
                     self.i = xy_TI[0][0]
@@ -56,11 +54,11 @@ class Bee:
                     if temp_free[idx]!=tempField[self.i,self.j]:
                         self.i = xy_free[idx][0]
                         self.j = xy_free[idx][1]
+            beeGrid[self.i,self.j]=1
+            
             # print("neighbors with appropriate temperature :", xy_TI)
             # print("other free neighbor spots : ", xy_free)
             # print("temps ", temp_free)
-            beeGrid[self.i,self.j]=1
-
             # print("end position : ",self.i, " ", self.j)
             
 

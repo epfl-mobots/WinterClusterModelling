@@ -104,12 +104,11 @@ class Hive:
         self.compute_Tbee()
         for b in self.colony:
             b.update(self.beeTempField,self.beeGrid)
-            #keyboard.wait('r')
         
     
     def compute_Tbee(self):
-        for x in range(1,self.dims_b[0]-1):
-            for y in range(1,self.dims_b[1]-1):
+        for x in range(0,self.dims_b[0]):
+            for y in range(0,self.dims_b[1]):
                 self.beeTempField[x,y] = sum(sum(self.tempField[self.g*x:self.g*(x+1),self.g*y:self.g*(y+1)]))/(self.g**2)
     
     

@@ -1,6 +1,7 @@
 from processing_py import *
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 import keyboard
 
 from hive import Hive
@@ -44,30 +45,30 @@ bee_param = {
     "ymax"  : 49
 }
 
-temp_param = {
-    "dims_temp" : (100,100), #twice as big as dims_b in Sumpter (twice finer grid)
-    "tempA" : 12,
-    "lambda_air" : 1.0,
-    "lambda_bee" : 0.45
-}
+# temp_param = {
+#     "dims_temp" : (100,100), #twice as big as dims_b in Sumpter (twice finer grid)
+#     "tempA" : 18,
+#     "lambda_air" : 1.0,
+#     "lambda_bee" : 0.45
+# }
 
 hive_param = {
-    "init_shape" : "random",
+    "init_shape" : "disc",
     "dims_b" : (50,50),
-    "n_bees" : 100,
+    "n_bees" : 200,
     "tau" : 8,
     "g" : 2,
     "bee_param" : bee_param,
     "dims_temp" : (100,100), #twice as big as dims_b in Sumpter (twice finer grid)
-    "tempA" : 12,
+    "tempA" : 18,
     "lambda_air" : 1.0,
     "lambda_bee" : 0.45,
-    "hq20" : 0.0037,
+    "hq20" : 0.037,#0.0037,
     "gamma" : np.log(2.4)/10
 }
 
-SIM_TIME = 500 #in bee timesteps
-DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
+SIM_TIME = 100 #in bee timesteps
+DRAW_T = 1 #the simulation is redrawn every DRAW_T steps
 
 sim = Sim(sim_param,hive_param,draw_on=True)
 for i in range(SIM_TIME):
@@ -75,4 +76,6 @@ for i in range(SIM_TIME):
     print(i)
 
 keyboard.wait('q')
+plt.plot(range(SIM_TIME+1),sim.hive.Tmax)
+plt.show()
 sim.end()

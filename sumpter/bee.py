@@ -14,7 +14,7 @@ class Bee:
     
 
     def update(self,tempField,beeGrid):
-        # print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])
+        print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])
         if tempField[self.i,self.j]<self.Tcoma:
             return
         else:
@@ -29,6 +29,7 @@ class Bee:
                     # print("[",xp,",",yp,"]:",tempField[xp,yp])
                     if tempField[xp,yp]<=self.TmaxI and tempField[xp,yp]>=self.TminI:
                         xy_TI.append([xp,yp])
+                        print(xp," ",yp)
                     else:
                         xy_free.append([xp,yp])
                         temp_free.append(abs(tempField[xp,yp]-0.5*(self.TmaxI+self.TminI)))
@@ -37,7 +38,7 @@ class Bee:
                     self.i = xy_TI[0][0]
                     self.j = xy_TI[0][1]
                 else:
-                    idx = np.random.randint(0,len(xy_TI)-1)
+                    idx = np.random.randint(0,len(xy_TI))
                     self.i = xy_TI[idx][0]
                     self.j = xy_TI[idx][1]
             elif xy_free:
@@ -50,15 +51,15 @@ class Bee:
                     if len(idxs)==1:
                         idx = idxs[0][0]
                     else: 
-                        idx = idxs[np.random.randint(0,len(idxs)-1)]
+                        idx = idxs[np.random.randint(0,len(idxs))]
                     if temp_free[idx]!=tempField[self.i,self.j]:
                         self.i = xy_free[idx][0]
                         self.j = xy_free[idx][1]
             beeGrid[self.i,self.j]=1
             
-            # print("neighbors with appropriate temperature :", xy_TI)
-            # print("other free neighbor spots : ", xy_free)
-            # print("temps ", temp_free)
-            # print("end position : ",self.i, " ", self.j)
+            print("neighbors with appropriate temperature :", xy_TI)
+            print("other free neighbor spots : ", xy_free)
+            print("temps ", temp_free)
+            print("end position : ",self.i, " ", self.j)
             
 

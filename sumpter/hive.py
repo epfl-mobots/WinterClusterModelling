@@ -20,7 +20,8 @@ class Hive:
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
         self.dims_temp = param["dims_temp"]        
         self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
-        self.currTmax = param['tempA']
+        self.Tmax = [param['tempA']]
+        self.Tmax_j = [0]
 
         #bee initialization
         self.beeGrid = np.zeros(self.dims_b)
@@ -28,7 +29,7 @@ class Hive:
         for i in range(param["n_bees"]):
             if param["init_shape"]=="disc":
             # initially in disc offset from corner
-                offset = (self.dims_b[0]//3,self.dims_b[1]//4)
+                offset = (self.dims_b[0]//2,self.dims_b[1]//2)
                 r = 7*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
@@ -72,7 +73,7 @@ class Hive:
 
 
     def init_temp(self):
-        for i in range(300):
+        for _ in range(1000):
             self.update_temp()
 
     def f(self,i,j):
@@ -100,15 +101,23 @@ class Hive:
     def update(self):
         for t in range(self.tau):
             self.update_temp()
-        self.currTmax=np.amax(self.tempField)
+        self.Tmax.append(np.amax(self.tempField))
+        self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1])
         self.compute_Tbee()
-        for b in self.colony:
-            b.update(self.beeTempField,self.beeGrid)
+        idxs = np.arange(self.colony.size)
+        np.random.shuffle(idxs)
+        print(idxs)
+        for i in idxs:
+            self.colony[i].update(self.beeTempField,self.beeGrid)
         
     
     def compute_Tbee(self):
-        for x in range(0,self.dims_b[0]):
-            for y in range(0,self.dims_b[1]):
-                self.beeTempField[x,y] = sum(sum(self.tempField[self.g*x:self.g*(x+1),self.g*y:self.g*(y+1)]))/(self.g**2)
+        for x in range(1,self.dims_b[0]):
+            for y in range(1,self.dims_b[1]):
+                x_st = int(self.g*(x-0.5))
+                x_e = int(self.g*(x+1-0.5))
+                y_st = int(self.g*(y-0.5))
+                y_e = int(self.g*(y+1-0.5))
+                self.beeTempField[x,y] = sum(sum(self.tempField[x_st:x_e,y_st:y_e]))/(self.g**2)
     
     

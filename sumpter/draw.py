@@ -8,7 +8,7 @@ def init_world(app):
     app.background(0,0,0)
 
 def get_hue(temp):
-    hue = 6000-480*temp#240 - 8*temp
+    hue = 480-24*temp#6000-480*temp#1800-120*temp##240 - 8*temp
     return hue
 
 def init_temp(app,hive):
@@ -65,11 +65,14 @@ def init_colony(app,hive):
         x_draw = b.j*app.width/hive.dims_b[0]
         y_draw = app.height-b.i*app.height/hive.dims_b[1]
         app.ellipse(x_draw,y_draw,SIZE_BEE,SIZE_BEE)
-    app.text("Max T : "+str(hive.currTmax),700,700)
+    #app.text("Max T : "+str(hive.currTmax),700,700)
+    T = str(hive.Tmax[-1])
+    app.text("Max T : "+T[0:5]+"C",700,700)
     app.redraw()
 
 def update(app,hive):
     init_temp(app,hive)
     init_colony(app,hive)
-    app.text("Max T : "+str(hive.currTmax)+"C",700,700)
+    T = str(hive.Tmax[-1])
+    app.text("Max T : "+T[0:5]+"C",700,700)
 

@@ -73,7 +73,7 @@ class Hive:
 
 
     def init_temp(self):
-        for _ in range(1000):
+        for _ in range(300):
             self.update_temp()
 
     def f(self,i,j):
@@ -105,8 +105,8 @@ class Hive:
         self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1])
         self.compute_Tbee()
         idxs = np.arange(self.colony.size)
-        np.random.shuffle(idxs)
-        print(idxs)
+        # np.random.shuffle(idxs)
+        # print(idxs)
         for i in idxs:
             self.colony[i].update(self.beeTempField,self.beeGrid)
         

@@ -14,7 +14,7 @@ class Bee:
     
 
     def update(self,tempField,beeGrid):
-        print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])
+        # print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])
         if tempField[self.i,self.j]<self.Tcoma:
             return
         else:
@@ -29,7 +29,7 @@ class Bee:
                     # print("[",xp,",",yp,"]:",tempField[xp,yp])
                     if tempField[xp,yp]<=self.TmaxI and tempField[xp,yp]>=self.TminI:
                         xy_TI.append([xp,yp])
-                        print(xp," ",yp)
+                        #print(xp," ",yp)
                     else:
                         xy_free.append([xp,yp])
                         temp_free.append(abs(tempField[xp,yp]-0.5*(self.TmaxI+self.TminI)))
@@ -57,9 +57,9 @@ class Bee:
                         self.j = xy_free[idx][1]
             beeGrid[self.i,self.j]=1
             
-            print("neighbors with appropriate temperature :", xy_TI)
-            print("other free neighbor spots : ", xy_free)
-            print("temps ", temp_free)
-            print("end position : ",self.i, " ", self.j)
+            # print("neighbors with appropriate temperature :", xy_TI)
+            # print("other free neighbor spots : ", xy_free)
+            # print("temps ", temp_free)
+            # print("end position : ",self.i, " ", self.j)
             
 

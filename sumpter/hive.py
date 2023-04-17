@@ -17,6 +17,10 @@ class Hive:
 
         #temperature field initialization
         #self.temp = TempField(param["temp_param"])
+        self.hotspot = param['hotspot']
+        if self.hotspot:
+            self.Tspot = param['Tspot']
+            
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
         self.dims_temp = param["dims_temp"]        
         self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
@@ -40,7 +44,7 @@ class Hive:
         bs = []
         for i in range(param["n_bees"]):
             if param["init_shape"]=="disc": # initially in disc offset from corner
-                offset = (self.dims_b[0]//2,self.dims_b[1]//2)
+                offset = (self.dims_b[0]//2,self.dims_b[1]//4)
                 r = 7*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
@@ -97,8 +101,12 @@ class Hive:
         return 0.25*d   
 
     def update_temp(self):
+        if self.hotspot:
+            self.tempField[self.hotspot[0],self.hotspot[1]] = self.Tspot
         for i in range(1,self.dims_temp[0]-1):
             for j in range(1,self.dims_temp[1]-1):
+                if self.hotspot and (i,j)==self.hotspot:
+                    continue
                 self.tempField[i,j] += self.diff(i,j) + self.f(i,j)
 
     def update(self):

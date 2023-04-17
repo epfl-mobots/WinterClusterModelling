@@ -73,13 +73,15 @@ bee_param = {
 }
 
 hive_param = {
-    "init_shape" : "random",
-    "dims_b" : (50,50),
+    "init_shape" : "disc",
+    "dims_b" : (50,100),
     "n_bees" : 200,
     "tau" : 13,
     "g" : 2,
     "bee_param" : bee_param,
-    "dims_temp" : (100,100), #twice as big as dims_b in Sumpter (twice finer grid)
+    "hotspot" : (50,150),
+    "Tspot" : 25,
+    "dims_temp" : (100,200), #twice as big as dims_b in Sumpter (twice finer grid)
     "tempA" : 13,
     "lambda_air" : 1.0,
     "lambda_bee" : 0.45,
@@ -88,7 +90,7 @@ hive_param = {
 }
 
 SIM_TIME = 2000 #in bee timesteps
-DRAW_T = 1000 #the simulation is redrawn every DRAW_T steps
+DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
 
 sim = Sim(hive_param,draw_on=True)
 for i in range(SIM_TIME):

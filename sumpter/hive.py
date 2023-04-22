@@ -1,8 +1,7 @@
 import numpy as np
 import random
 from bee import Bee
-from temp_field import TempField
-import keyboard
+
 
 class Hive:
     def __init__(self, param):
@@ -22,6 +21,7 @@ class Hive:
             self.Tspot = param['Tspot']
             
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
+        self.tempField_save = [param['tempA']*np.ones(self.param['dims_temp'])]
         self.dims_temp = param["dims_temp"]        
         self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
         self.Tmax = [param['tempA']]
@@ -128,6 +128,7 @@ class Hive:
         
         self.centroid = np.mean(np.argwhere(self.beeGrid[-1]),axis=0)
         self.Tc.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
+        self.tempField_save.append(self.tempField)
         
     
     def compute_Tbee(self):

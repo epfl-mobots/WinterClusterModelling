@@ -45,6 +45,10 @@ class Sim:
         pickle.dump(self.hive.beeGrid,f)
         f.close()
 
+        f = open(self.savepath+"T_field.obj", "wb")
+        pickle.dump(self.hive.tempField_save,f)
+        f.close()
+
         f = open(self.savepath+"Tc.obj", "wb")
         pickle.dump(self.hive.Tc,f)
         f.close()
@@ -69,7 +73,7 @@ bee_param = {
     "TminI" : 18,
     "TmaxI" : 23,
     "xmax"  : 49,
-    "ymax"  : 49
+    "ymax"  : 99
 }
 
 hive_param = {
@@ -89,7 +93,7 @@ hive_param = {
     "gamma" : np.log(2.4)/10
 }
 
-SIM_TIME = 2000 #in bee timesteps
+SIM_TIME = 200 #in bee timesteps
 DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
 
 sim = Sim(hive_param,draw_on=True)

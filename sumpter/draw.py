@@ -3,6 +3,9 @@ from matplotlib.colors import hsv_to_rgb
 
 SIZE_BEE = 5
 MAX_VAL = 100
+T_MIN_DRAW = 10
+T_MAX_DRAW = 27
+SIZE_BEE = 1
 
 def init_world(app):
     app.background(0,0,0)

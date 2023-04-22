@@ -8,7 +8,7 @@ import draw
 
 
 class Sim:
-    def __init__(self,hive_param,draw_on=True,hotspot=False):
+    def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10):
         #create save directory for plots and data
         path = '../data/'
         today = datetime.datetime.now()
@@ -28,6 +28,8 @@ class Sim:
         self.draw_on = draw_on
         if draw_on:
             self.start_graphic()
+        
+        self.draw_t = draw_t
         self.count=0
         
         
@@ -35,9 +37,9 @@ class Sim:
         draw.update(self.hive,self.savepath)
 
     def update(self):
-        self.hive.update()
+        self.hive.update(self.count)
         self.count+=1
-        if self.draw_on and self.count%DRAW_T==0:
+        if self.draw_on and self.count%self.draw_t==0:
             draw.update(self.hive,self.savepath,self.count)
     
     def end(self):
@@ -66,46 +68,46 @@ class Sim:
         f.close()
         return
 
-#------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------
 
-bee_param = {
-    "Tcoma" : 8,
-    "TminI" : 18,
-    "TmaxI" : 23,
-    "xmax"  : 49,
-    "ymax"  : 99
-}
+# bee_param = {
+#     "Tcoma" : 8,
+#     "TminI" : 18,
+#     "TmaxI" : 23,
+#     "xmax"  : 49,
+#     "ymax"  : 99
+# }
 
-hotspot = {
-    "coord" : [[0,3],[1,3]],
-    "Tspot" : 25,
-    "on" : 0
-}
+# hotspot = {
+#     "coord" : [[0,3],[1,3]],
+#     "Tspot" : 25,
+#     "on" : 0
+# }
 
-hive_param = {
-    "init_shape" : "disc",
-    "dims_b" : (50,100),
-    "n_bees" : 200,
-    "tau" : 13,
-    "g" : 2,
-    "bee_param" : bee_param,
-    "dims_temp" : (100,200), #twice as big as dims_b in Sumpter (twice finer grid)
-    "tempA" : 13,
-    "lambda_air" : 1.0,
-    "lambda_bee" : 0.45,
-    "hq20" : 0.037,#0.0037,
-    "gamma" : np.log(2.4)/10
-}
+# hive_param = {
+#     "init_shape" : "disc",
+#     "dims_b" : (50,100),
+#     "n_bees" : 200,
+#     "tau" : 13,
+#     "g" : 2,
+#     "bee_param" : bee_param,
+#     "dims_temp" : (100,200), #twice as big as dims_b in Sumpter (twice finer grid)
+#     "tempA" : 13,
+#     "lambda_air" : 1.0,
+#     "lambda_bee" : 0.45,
+#     "hq20" : 0.037,#0.0037,
+#     "gamma" : np.log(2.4)/10
+# }
 
-SIM_TIME = 200 #in bee timesteps
-DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
+# SIM_TIME = 200 #in bee timesteps
+# DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
 
-sim = Sim(hive_param,draw_on=True,hotspot=hotspot)
-for i in range(SIM_TIME):
-    sim.update()
-    print(i)
+# sim = Sim(hive_param,draw_on=True,hotspot=hotspot)
+# for i in range(SIM_TIME):
+#     sim.update()
+#     print(i)
 
-#keyboard.wait('q')
-plt.plot(range(SIM_TIME),sim.hive.Tc[1:])
-plt.show()
-sim.end()
+# #keyboard.wait('q')
+# plt.plot(range(SIM_TIME),sim.hive.Tc[1:])
+# plt.show()
+# sim.end()

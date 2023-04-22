@@ -1,4 +1,3 @@
-from processing_py import *
 import numpy as np
 
 class Bee:

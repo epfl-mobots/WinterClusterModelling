@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gc
 
-T_MIN_DRAW = 10
-T_MAX_DRAW = 30
+T_MIN_DRAW = 9
+T_MAX_DRAW = 27
 SIZE_BEE = 1
 
 colors=[]

@@ -19,6 +19,7 @@ class Hive:
         self.dims_temp = param["dims_temp"]
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
 
+        self.hot_on=False
         self.hotspot = hotspot
         if type(hotspot)!=bool:
             #computing position of possible hotspots depending on the temperature field dimensions
@@ -32,8 +33,9 @@ class Hive:
             self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in hotspot['coord']]
             self.Tspot = hotspot['Tspot']
             if hotspot['on']==0:
-                for a,b in zip(self.hotspot_i,self.hotspot_j):
-                    self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
+                self.set_hotspot()
+
+                
         
         self.tempField_save = [self.tempField]
 
@@ -82,10 +84,10 @@ class Hive:
 
             else: # random initialization across grid
                 i_b = 1 + int(random.random()*(self.dims_b[0]-2))
-                j_b = 1 + int(random.random()*(self.dims_b[1]-2))
+                j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
                 while self.beeGrid[-1][i_b,j_b]!=0:
                     i_b = 1 + int(random.random()*(self.dims_b[0]-2))
-                    j_b = 1 + int(random.random()*(self.dims_b[1]-2))
+                    j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
             
             self.beeGrid[-1][i_b,j_b] = 1
             
@@ -97,6 +99,11 @@ class Hive:
     def init_temp(self):
         for _ in range(1000):
             self.update_temp()
+
+    def set_hotspot(self):
+        self.hot_on = True
+        for a,b in zip(self.hotspot_i,self.hotspot_j):
+            self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
 
     def f(self,i,j):
         if ((i%2==0) and (j%2==0) and (self.beeGrid[-1][i//2,j//2]!=0)):
@@ -125,11 +132,14 @@ class Hive:
         #     self.tempField[self.hotspot[0],self.hotspot[1]] = self.Tspot
         for i in range(1,self.dims_temp[0]-1):
             for j in range(1,self.dims_temp[1]-1):
-                if type(self.hotspot)!=bool and self.h(i,j):
+                if self.hot_on and self.h(i,j):
                     continue
                 self.tempField[i,j] += self.diff(i,j) + self.f(i,j)
 
-    def update(self):
+    def update(self,count):
+        if self.hotspot['on']==count:
+            self.set_hotspot()
+
         # tau temperature updates for each bee update
         for _ in range(self.tau):
             self.update_temp()

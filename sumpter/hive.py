@@ -4,7 +4,7 @@ from bee import Bee
 
 
 class Hive:
-    def __init__(self, param):
+    def __init__(self, param, hotspot):
         self.param = param
         self.tau = param["tau"]
         self.g = param["g"]
@@ -16,13 +16,27 @@ class Hive:
 
         #temperature field initialization
         #self.temp = TempField(param["temp_param"])
-        self.hotspot = param['hotspot']
-        if self.hotspot:
-            self.Tspot = param['Tspot']
-            
+        self.dims_temp = param["dims_temp"]
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
-        self.tempField_save = [param['tempA']*np.ones(self.param['dims_temp'])]
-        self.dims_temp = param["dims_temp"]        
+
+        self.hotspot = hotspot
+        if type(hotspot)!=bool:
+            #computing position of possible hotspots depending on the temperature field dimensions
+            self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
+            self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
+            self.sz_spot = int(0.34*self.dims_temp[0])
+
+            #setting position of hotspot
+            self.n_spot = len(hotspot['coord'])
+            self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in hotspot['coord']]#(self.i_hot[param["i_hotspot"]],self.j_hot[param["j_hotspot"]])
+            self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in hotspot['coord']]
+            self.Tspot = hotspot['Tspot']
+            if hotspot['on']==0:
+                for a,b in zip(self.hotspot_i,self.hotspot_j):
+                    self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
+        
+        self.tempField_save = [self.tempField]
+
         self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
         self.Tmax = [param['tempA']]
         self.Tc = [param['tempA']]
@@ -75,7 +89,7 @@ class Hive:
             
             self.beeGrid[-1][i_b,j_b] = 1
             
-            print(i," : ",i_b, ", ",j_b)
+            # print(i," : ",i_b, ", ",j_b)
             bs.append(Bee(i_b,j_b,param["bee_param"]))
 
         return bs
@@ -100,12 +114,18 @@ class Hive:
 
         return 0.25*d   
 
+    def h(self,i,j):
+        for n in range(self.n_spot):
+            if i>self.hotspot_i[n][0] and i<self.hotspot_i[n][1] and j>self.hotspot_j[n][0] and j<self.hotspot_j[n][1]:
+                return True
+        return False
+
     def update_temp(self):
-        if self.hotspot:
-            self.tempField[self.hotspot[0],self.hotspot[1]] = self.Tspot
+        # if self.hotspot:
+        #     self.tempField[self.hotspot[0],self.hotspot[1]] = self.Tspot
         for i in range(1,self.dims_temp[0]-1):
             for j in range(1,self.dims_temp[1]-1):
-                if self.hotspot and (i,j)==self.hotspot:
+                if type(self.hotspot)!=bool and self.h(i,j):
                     continue
                 self.tempField[i,j] += self.diff(i,j) + self.f(i,j)
 

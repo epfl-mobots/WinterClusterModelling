@@ -15,11 +15,16 @@ class Sim:
         todaystr = today.isoformat()
         todaystr = todaystr.replace(":","_")[0:19]
         self.savepath = path+todaystr+'/'
+        self.savegraphpath = path+todaystr+"/graphics/"
         if not os.path.isdir(path+todaystr):
             os.mkdir(path+todaystr)
+            os.mkdir(path+todaystr+"/graphics")
 
         f = open(self.savepath+"parameters.txt", "a")
         for k, v in hive_param.items():
+            f.write(str(k) + ' : '+ str(v) + '\n\n')
+            
+        for k, v in hotspot.items():
             f.write(str(k) + ' : '+ str(v) + '\n\n')
         f.close()
 
@@ -34,13 +39,13 @@ class Sim:
         
         
     def start_graphic(self):
-        draw.update(self.hive,self.savepath)
+        draw.update(self.hive,self.savegraphpath)
 
     def update(self):
         self.hive.update(self.count)
         self.count+=1
         if self.draw_on and self.count%self.draw_t==0:
-            draw.update(self.hive,self.savepath,self.count)
+            draw.update(self.hive,self.savegraphpath,self.count)
     
     def end(self):
         f = open(self.savepath+"beeGrid.obj", "wb")

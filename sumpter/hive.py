@@ -52,7 +52,7 @@ class Hive:
         bs = self.init_colony(param)
         self.colony = np.array(bs)
         self.centroid = np.mean(np.argwhere(self.beeGrid[-1]),axis=0)
-
+        self.bg_save = [self.beeGrid[-1].copy()]
         #self.init_temp()
 
 
@@ -158,7 +158,8 @@ class Hive:
         
         self.centroid = np.mean(np.argwhere(self.beeGrid[-1]),axis=0)
         self.Tc.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
-        self.tempField_save.append(self.tempField)
+        self.tempField_save.append(self.tempField.copy())
+        self.bg_save.append(self.beeGrid[-1].copy())
         
     
     def compute_Tbee(self):

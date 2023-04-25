@@ -49,7 +49,7 @@ class Sim:
     
     def end(self):
         f = open(self.savepath+"beeGrid.obj", "wb")
-        pickle.dump(self.hive.beeGrid,f)
+        pickle.dump(self.hive.bg_save,f)
         f.close()
 
         f = open(self.savepath+"T_field.obj", "wb")

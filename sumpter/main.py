@@ -33,9 +33,13 @@ hive_param = {
 
 dr = [10,1000,1000]
 
-for h in [2,3,4]:
-    for T_amb in [9,13,17]:
-        for k in range(3):
+hotspot_positions = [2,4]#3
+ambient_temperatures = [9,13,15]
+folds = 3
+
+for h in hotspot_positions:
+    for T_amb in ambient_temperatures:
+        for k in range(folds):
             bee_param = {
                 "Tcoma" : 8,
                 "TminI" : 18,
@@ -65,9 +69,8 @@ for h in [2,3,4]:
                 "gamma" : np.log(2.4)/10
             }
             SIM_TIME = 3000 #in bee timesteps
-            #DRAW_T = dr[k] #the simulation is redrawn every DRAW_T steps
 
-            sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=dr[k])
+            sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=dr[k]) #the simulation is redrawn every DRAW_T steps
             for i in range(SIM_TIME):
                 sim.update()
                 print(i)

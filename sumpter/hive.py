@@ -130,15 +130,19 @@ class Hive:
     def update_temp(self):
         # if self.hotspot:
         #     self.tempField[self.hotspot[0],self.hotspot[1]] = self.Tspot
+        f_mat = self.hq20*np.exp(self.gamma*(self.tempField-20))
         for i in range(1,self.dims_temp[0]-1):
             for j in range(1,self.dims_temp[1]-1):
                 if self.hot_on and self.h(i,j):
                     continue
-                self.tempField[i,j] += self.diff(i,j) + self.f(i,j)
+                f_ij = f_mat[i,j] if ((i%2==0) and (j%2==0) and (self.beeGrid[-1][i//2,j//2]!=0)) else 0
+                self.tempField[i,j] += self.diff(i,j) + f_ij #+ self.f(i,j)
 
     def update(self,count):
         if self.hotspot['on']==count:
             self.set_hotspot()
+        elif self.hot_on and self.hotspot['off']==count:
+            self.hot_on = False
 
         # tau temperature updates for each bee update
         for _ in range(self.tau):

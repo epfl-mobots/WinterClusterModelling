@@ -17,7 +17,8 @@ import glob
 
 path = "C:/Users/Louise/Documents/EPFL/MA4/Project/data/"
 
-dir = glob.glob(path+'2023-04-2*/')
+#dir = glob.glob(path+'2023-04-2*/')
+dir = [path+"2023-04-23T14_43_37/"]
 plt.figure()
 for d in dir:
     if not os.path.isdir(d+"analysis"):
@@ -34,19 +35,16 @@ for d in dir:
     f.close()
     print(len(temp_field), len(temp_field[0]),len(temp_field[0][0]))
 
-    # for i in range(99):
-    #     centroid = np.mean(np.argwhere(bg[i]),axis=0)
-    #     print(centroid)
-    #     plt.scatter(i,centroid[0])
-    # plt.show()
-
     if not os.path.isdir(d+"analysis/bee"):
         os.mkdir(d+"analysis/bee")
         os.mkdir(d+"analysis/temp")
         os.mkdir(d+"analysis/combined")
-
+    if not os.path.isdir(d+"analysis/grad_dir"):
+        os.mkdir(d+"analysis/grad_dir")
     times = range(0,len(temp_field)-1,10)
+    
     for t in times:
+        #plot with bee bars for columns
         per_col = np.sum((bg[t]!=0),axis=0)
         plt.bar(range(len(per_col)),per_col)
         plt.ylim((0,100))
@@ -63,12 +61,27 @@ for d in dir:
         fig, ax1 = plt.subplots() 
         ax1.set_ylabel('n_bees', color = 'red') 
         ax1.set_ylim((0,100))
-        ax1.bar(range(0,200,2), 2*per_col, color = 'red')         
+                
         # Adding Twin Axes
+        temp_to_plot = temp_field[t,int(centroid[0]),:]
+        min_temps = temp_field[t,:,:].min(axis=0)
+        max_temps = temp_field[t,:,:].max(axis=0)
+
+        # computing area to shade
+        idxs_up = temp_to_plot>18
+        idxs_down = temp_to_plot<23
+        idxs_comf = np.nonzero(idxs_up & idxs_down)[0]
+        #plotting curve of temperature across i of bee centroid position
         ax2 = ax1.twinx() 
         ax2.set_ylabel('temperature', color = 'blue') 
         ax2.set_ylim((9,25))
-        ax2.plot(range(200), temp_field[t,int(centroid[0]),:], color = 'blue') 
+        ax2.plot(range(200), temp_to_plot, color = 'blue')
+        ax2.plot(range(200), min_temps, color = 'blue', linestyle='--', linewidth=0.5)
+        ax2.plot(range(200), max_temps, color = 'blue', linestyle='--', linewidth=0.5)
+        #shading comfort area
+        ax2.fill_between(idxs_comf,temp_to_plot[idxs_comf],alpha=0.3)
+
+        ax1.bar(range(0,200,2), 2*per_col, color = 'red') 
         plt.savefig(d+"analysis/combined/it_{}.png".format(t))
 
         # Close figure, clear everything

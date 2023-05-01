@@ -88,7 +88,8 @@ else:
         "TminI" : 18,
         "TmaxI" : 23,
         "xmax"  : 49,
-        "ymax"  : 99
+        "ymax"  : 99,
+        "alpha" : 0.01
     }
 
     hotspot = {

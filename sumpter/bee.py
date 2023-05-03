@@ -14,22 +14,46 @@ class Bee:
         #states (sumpter - leave - explore)
         self.state = 'sumpter'
         self.prob_tr = param['alpha']
-        self.direction = [0,0]
+        self.direction = np.array([0,0])
+        self.bounced = 0
     
-    def draw_direction(self):
-        border = np.random.choice(['up','down','left','right'])
+    def draw_direction(self, exclude='none'):
+        borders = ['up','down','left','right']
+        if exclude!='none':
+            borders.remove(exclude)
+        border = np.random.choice(borders)
+
         if border=='up':
-            self.direction = [0,np.random.randint(self.jmax+1)]
+            self.direction = np.array([0,np.random.randint(self.jmax+1)])
         if border=='down':
-            self.direction = [self.imax,np.random.randint(self.jmax+1)]
+            self.direction = np.array([self.imax,np.random.randint(self.jmax+1)])
         if border=='left':
-            self.direction = [np.random.randint(self.imax+1,0)]
+            self.direction = np.array([np.random.randint(self.imax+1,0)])
         if border=='right':
-            self.direction = [np.random.randint(self.imax+1,self.jmax)]
+            self.direction = np.array([np.random.randint(self.imax+1,self.jmax)])
         
+        if self.state == 'explore':
+            self.bounced += 1
+        
+    def move_toward_dir(self,beeGrid,init_pos):
+        print("initial position : ",self.i, " ", self.j)
+        pos_dir = init_pos + (1/np.linalg.norm(self.direction-init_pos))*(self.direction-init_pos)
+        print("direct_pos : ", pos_dir)
+
+        next_pos = np.array([0,0])
+        min_dist = 1000
+        for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
+            if beeGrid[ip,jp]!=0:
+                continue
+            if np.linalg.norm(pos_dir-np.array(ip,jp))<min_dist:
+                next_pos = np.array([ip,jp])
+                min_dist = np.linalg.norm(pos_dir-next_pos)
+
+        self.i = next_pos[0]
+        self.j = next_pos[1]
 
     def update(self,tempField,beeGrid):
-        init_pos = (self.i,self.j)
+        init_pos = np.array([self.i,self.j])
         '''print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])'''
 
         #STATE RE_EVALUATION
@@ -50,17 +74,19 @@ class Bee:
                 self.state='explore'
 
         elif self.state=='explore':
-            #check local temperature
-            if tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI:
+            #go back to sumpter if local temp is comfy or if bounced twice
+            if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=2:
                 self.state='sumpter'
-            #add implementation for 2 walls hit -> sumpter 
+                self.bounced = 0
 
         ## ACTIONS according to state
-        if self.state == 'sumpter':
-            if tempField[self.i,self.j]<self.Tcoma:
-                return
-            else:
-                beeGrid[self.i,self.j]=0
+        if tempField[self.i,self.j]<self.Tcoma:
+            return
+        
+        else:
+            beeGrid[self.i,self.j]=0
+
+            if self.state == 'sumpter':
                 xy_TI = [] # positions within reachable range that are within [TminI;TmaxI]
                 xy_free = [] # other positions within reachable range
                 temp_free = []
@@ -100,15 +126,29 @@ class Bee:
                             self.i = xy_free[idx][0]
                             self.j = xy_free[idx][1]
                 
-                if self.i==init_pos[0] and self.j==init_pos[1]:
-                    beeGrid[self.i,self.j]=1
-                else:
-                    beeGrid[self.i,self.j]=2
-                
                 '''print("neighbors with appropriate temperature :", xy_TI)
                 print("other free neighbor spots : ", xy_free)
                 print("temps ", temp_free)
                 print("end position : ",self.i, " ", self.j)'''
         
+            elif self.state == 'leave' or self.state=='explore':
+                # if hit a wall, draw a new direction on another wall
+                if self.i == self.imax:
+                    self.draw_direction(exclude='down')
+                if self.i == 0:
+                    self.draw_direction(exclude='up')
+                if self.j == self.jmax:
+                    self.draw_direction(exclude='right')
+                if self.j == 0:
+                    self.draw_direction(exclude='left')
+
+                self.move_toward_dir(beeGrid,init_pos)
+                
+            # update beeGrid with the new position (and if bee is static or moved)
+            if self.i==init_pos[0] and self.j==init_pos[1]:
+                beeGrid[self.i,self.j]=1
+            else:
+                beeGrid[self.i,self.j]=2
+            
                 
 

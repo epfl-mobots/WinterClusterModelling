@@ -89,18 +89,19 @@ else:
         "TmaxI" : 23,
         "xmax"  : 49,
         "ymax"  : 99,
-        "alpha" : 0.01
+        "prob_mode" : 'constant',
+        "alpha" : 0.001
     }
 
     hotspot = {
-        "coord" : [[0,3],[1,3]], #change
+        "coord" : [[0,4],[1,4]], #change
         "Tspot" : 20.5, #change
-        "on" : 0, #change
-        "off" : 50
+        "on" : 200, #change
+        "off" : 700
     }
 
     hive_param = {
-        "init_shape" : "random",
+        "init_shape" : "disc",
         "dims_b" : (50,100),
         "n_bees" : 200,
         "tau" : 8,
@@ -113,7 +114,7 @@ else:
         "hq20" : 0.037,
         "gamma" : np.log(2.4)/10
     }
-    SIM_TIME = 100 #in bee timesteps
+    SIM_TIME = 600 #in bee timesteps
 
     sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=1) #the simulation is redrawn every DRAW_T steps
     for i in tqdm(range(SIM_TIME)):

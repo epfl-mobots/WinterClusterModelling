@@ -28,29 +28,32 @@ class Bee:
         if border=='down':
             self.direction = np.array([self.imax,np.random.randint(self.jmax+1)])
         if border=='left':
-            self.direction = np.array([np.random.randint(self.imax+1,0)])
+            self.direction = np.array([np.random.randint(self.imax+1),0])
         if border=='right':
-            self.direction = np.array([np.random.randint(self.imax+1,self.jmax)])
+            self.direction = np.array([np.random.randint(self.imax+1),self.jmax])
         
         if self.state == 'explore':
             self.bounced += 1
         
     def move_toward_dir(self,beeGrid,init_pos):
-        print("initial position : ",self.i, " ", self.j)
+        #print("initial position : ",self.i, " ", self.j)
         pos_dir = init_pos + (1/np.linalg.norm(self.direction-init_pos))*(self.direction-init_pos)
-        print("direct_pos : ", pos_dir)
+        #print("direct_pos : ", pos_dir)
 
         next_pos = np.array([0,0])
-        min_dist = 1000
-        for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
-            if beeGrid[ip,jp]!=0:
+        min_dist = 10000
+        for ip,jp in zip([self.i-1,self.i,self.i+1,self.i],[self.j,self.j-1,self.j,self.j+1]):
+            if ip>self.imax or jp>self.jmax or beeGrid[ip,jp]!=0:
                 continue
-            if np.linalg.norm(pos_dir-np.array(ip,jp))<min_dist:
+            if np.linalg.norm(pos_dir-np.array([ip,jp]))<min_dist:
                 next_pos = np.array([ip,jp])
                 min_dist = np.linalg.norm(pos_dir-next_pos)
+        
+        if min_dist!=10000: #if there is a free spot somewhere around that the bee will move to
+            self.i = next_pos[0]
+            self.j = next_pos[1]
 
-        self.i = next_pos[0]
-        self.j = next_pos[1]
+        #print("next_pos : ", [self.i,self.j])
 
     def update(self,tempField,beeGrid):
         init_pos = np.array([self.i,self.j])

@@ -29,10 +29,15 @@ def update(hive,path,count=0):
 
     #plotting bees
     for b in hive.colony:
-        plt.scatter(b.j*hive.g,b.i*hive.g,c='black',s=SIZE_BEE)
+        if b.state=='sumpter':
+            plt.scatter(b.j*hive.g,b.i*hive.g,c='black',s=SIZE_BEE)
+        if b.state=='leave':
+            plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE,marker='D')
+        if b.state=='explore':
+            plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE)
 
     #print centroid position and temperature (bottom right)
-    plt.scatter(hive.centroid[1]*hive.g,hive.centroid[0]*hive.g,c='red',s=2)
+    # plt.scatter(hive.centroid[1]*hive.g,hive.centroid[0]*hive.g,c='red',s=2)
     # T = str(hive.Tc[-1])
     # plt.text(75,5,"Tc: "+T[0:6]+"C",c='red')
 

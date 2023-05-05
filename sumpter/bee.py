@@ -1,4 +1,15 @@
 import numpy as np
+import math
+
+# constants describing the beeGrid state
+FREE = 0
+STAT = 1
+MOV = 2
+ON_STAT = 3
+ON_MOV = 4
+
+# constant for switching back from explore to sumpter
+MAX_BOUNCE = 2
 
 class Bee:
     def __init__(self, x, y, param):
@@ -13,6 +24,7 @@ class Bee:
 
         #states (sumpter - leave - explore)
         self.state = 'sumpter'
+        self.prob_mode = param['prob_mode']
         self.prob_tr = param['alpha']
         self.direction = np.array([0,0])
         self.bounced = 0
@@ -43,7 +55,6 @@ class Bee:
         next_pos = np.array([0,0])
         min_dist = 10000
         for ip,jp in zip([self.i-1,self.i,self.i+1,self.i],[self.j,self.j-1,self.j,self.j+1]):
-            if ip>self.imax or jp>self.jmax or beeGrid[ip,jp]!=0:
                 continue
             if np.linalg.norm(pos_dir-np.array([ip,jp]))<min_dist:
                 next_pos = np.array([ip,jp])
@@ -54,6 +65,12 @@ class Bee:
             self.j = next_pos[1]
 
         #print("next_pos : ", [self.i,self.j])
+    
+    def update_prob(self, temp):
+        if self.prob_mode == 'temp_dep':
+            # print(temp)
+            # print(self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI))))
+            return self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
 
     def update(self,tempField,beeGrid):
         init_pos = np.array([self.i,self.j])
@@ -61,8 +78,9 @@ class Bee:
 
         #STATE RE_EVALUATION
         if self.state=='sumpter':
-            #random draw with a probability prob_tr to go into leave mode
-            leave = np.random.choice([True,False],p=[self.prob_tr,1-self.prob_tr])
+            prob_alpha = self.prob_tr if self.prob_mode!='temp_dep' else self.update_prob(tempField[self.i,self.j])
+            #random draw with a probability prob_alpha to go into leave mode
+            leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
             if leave:
                 self.state = 'leave'
                 self.draw_direction()
@@ -71,14 +89,14 @@ class Bee:
             #check if neighbouring spots are empty (if they are, leaving phase is over)
             nb_empty=0
             for ip,jp in zip([self.i-1,self.i,self.i+1,self.i],[self.j,self.j-1,self.j,self.j+1]):
-                if beeGrid[ip,jp]==0:
+                if beeGrid[ip,jp]==FREE:
                     nb_empty+=1
             if nb_empty==4:
                 self.state='explore'
 
         elif self.state=='explore':
             #go back to sumpter if local temp is comfy or if bounced twice
-            if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=2:
+            if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=MAX_BOUNCE:
                 self.state='sumpter'
                 self.bounced = 0
 
@@ -87,16 +105,16 @@ class Bee:
             return
         
         else:
-            beeGrid[self.i,self.j]=0
-
             if self.state == 'sumpter':
+                beeGrid[self.i,self.j]=FREE
+
                 xy_TI = [] # positions within reachable range that are within [TminI;TmaxI]
                 xy_free = [] # other positions within reachable range
                 temp_free = []
                 for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
                     if jp<1 or jp>self.jmax or ip<1 or ip>self.imax:
                         continue
-                    if beeGrid[ip,jp]==0:
+                    if beeGrid[ip,jp]==FREE:
                         '''print("[",ip,",",jp,"]:",tempField[ip,jp])'''
                         if tempField[ip,jp]<=self.TmaxI and tempField[ip,jp]>=self.TminI:
                             xy_TI.append([ip,jp])
@@ -133,8 +151,22 @@ class Bee:
                 print("other free neighbor spots : ", xy_free)
                 print("temps ", temp_free)
                 print("end position : ",self.i, " ", self.j)'''
+                # update beeGrid with the new position (and if bee is static or moved)
+                if self.i==init_pos[0] and self.j==init_pos[1]:
+                    beeGrid[self.i,self.j]=STAT
+                else:
+                    beeGrid[self.i,self.j]=MOV
         
-            elif self.state == 'leave' or self.state=='explore':
+            elif self.state == 'leave':
+                if beeGrid[self.i,self.j]==ON_STAT:
+                    beeGrid[self.i,self.j]=STAT
+                elif beeGrid[self.i,self.j]==ON_MOV:
+                    beeGrid[self.i,self.j]=MOV
+                else:
+                    beeGrid[self.i,self.j]=FREE
+
+                self.move_toward_dir(beeGrid,init_pos)
+
                 # if hit a wall, draw a new direction on another wall
                 if self.i == self.imax:
                     self.draw_direction(exclude='down')

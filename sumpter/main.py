@@ -89,7 +89,7 @@ else:
         "TmaxI" : 23,
         "xmax"  : 49,
         "ymax"  : 99,
-        "prob_mode" : 'constant',
+        "prob_mode" : 'temp_dep',
         "alpha" : 0.001
     }
 
@@ -114,7 +114,7 @@ else:
         "hq20" : 0.037,
         "gamma" : np.log(2.4)/10
     }
-    SIM_TIME = 600 #in bee timesteps
+    SIM_TIME = 2000 #in bee timesteps
 
     sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=1) #the simulation is redrawn every DRAW_T steps
     for i in tqdm(range(SIM_TIME)):

@@ -52,6 +52,10 @@ class Sim:
         pickle.dump(self.hive.bg_save,f)
         f.close()
 
+        f = open(self.savepath+"beeGrid_2nd.obj", "wb")
+        pickle.dump(self.hive.bg2_save,f)
+        f.close()
+
         f = open(self.savepath+"T_field.obj", "wb")
         pickle.dump(self.hive.tempField_save,f)
         f.close()

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import gc
+from bee import FREE, STAT, MOV
 
 T_MIN_DRAW = 9
 T_MAX_DRAW = 27
@@ -29,11 +30,17 @@ def update(hive,path,count=0):
 
     #plotting bees
     for b in hive.colony:
-        if b.state=='sumpter':
-            plt.scatter(b.j*hive.g,b.i*hive.g,c='black',s=SIZE_BEE)
-        if b.state=='leave':
-            plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE,marker='D')
-        if b.state=='explore':
+        if b.state=='sumpter' :
+            if hive.beeGrid_2nd[b.i,b.j]!=FREE: #if there is a bee in the 2nd layer
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=1.5*SIZE_BEE)
+            else:
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='black',s=SIZE_BEE)
+        elif b.state=='leave':
+            if hive.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=1.5*SIZE_BEE)
+            else:
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE,marker='D')
+        elif b.state=='explore':
             plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE)
 
     #print centroid position and temperature (bottom right)

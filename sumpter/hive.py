@@ -2,6 +2,10 @@ import numpy as np
 import random
 from bee import Bee
 
+# constants describing the beeGrid state
+FREE = 0
+STAT = 1
+MOV = 2
 
 class Hive:
     def __init__(self, param, hotspot):
@@ -48,11 +52,16 @@ class Hive:
 
         #colony initialization
         self.n_bees = param["n_bees"]
-        self.beeGrid = [np.zeros(self.dims_b)]   
+        self.beeGrid = np.zeros(self.dims_b)
         bs = self.init_colony(param)
         self.colony = np.array(bs)
-        self.centroid = np.mean(np.argwhere(self.beeGrid[-1]),axis=0)
-        self.bg_save = [self.beeGrid[-1].copy()]
+        self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
+        self.bg_save = [self.beeGrid.copy()]
+
+        #2nd layer of beeGrid for bees in 'leave' state
+        self.beeGrid_2nd = np.zeros(self.dims_b)
+        self.bg2_save = [self.beeGrid_2nd.copy()]
+
         #self.init_temp()
 
 
@@ -65,7 +74,7 @@ class Hive:
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
                 j_b = int(r*np.sin(theta))+offset[1]
-                while self.beeGrid[-1][i_b,j_b]!=0:
+                while self.beeGrid[i_b,j_b]!=FREE:
                     r = 10*random.random()
                     theta = 2*np.pi*random.random()
                     i_b = int(r*np.cos(theta))+offset[0]
@@ -76,7 +85,7 @@ class Hive:
                 theta = 2*np.pi*random.random()
                 i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
                 j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
-                while self.beeGrid[-1][i_b,j_b]!=0:
+                while self.beeGrid[i_b,j_b]!=FREE:
                     r = 10*random.random()
                     theta = 2*np.pi*random.random()
                     i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
@@ -85,11 +94,11 @@ class Hive:
             else: # random initialization across grid
                 i_b = 1 + int(random.random()*(self.dims_b[0]-2))
                 j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
-                while self.beeGrid[-1][i_b,j_b]!=0:
+                while self.beeGrid[i_b,j_b]!=FREE:
                     i_b = 1 + int(random.random()*(self.dims_b[0]-2))
                     j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
             
-            self.beeGrid[-1][i_b,j_b] = 1
+            self.beeGrid[i_b,j_b] = STAT
             
             # print(i," : ",i_b, ", ",j_b)
             bs.append(Bee(i_b,j_b,param["bee_param"]))
@@ -106,17 +115,17 @@ class Hive:
             self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
 
     def f(self,i,j):
-        if ((i%2==0) and (j%2==0) and (self.beeGrid[-1][i//2,j//2]!=0)):
+        if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)):
             return self.hq20*np.exp(self.gamma*(self.tempField[i,j]-20))
 
         return 0
 
     def diff(self,i,j):
         d = 0
-        l = self.l_bee if ((i%2==0) and (j%2==0) and (self.beeGrid[-1][i//2,j//2]==1)) else self.l_air
+        l = self.l_bee if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]==STAT)) else self.l_air
 
         for ip,jp in zip([i-1,i,i+1,i],[j,j-1,j,j+1]):
-            lp = self.l_bee if ((ip%2==0) and (jp%2==0) and (self.beeGrid[-1][ip//2,jp//2]==1)) else self.l_air
+            lp = self.l_bee if ((ip%2==0) and (jp%2==0) and (self.beeGrid[ip//2,jp//2]==STAT)) else self.l_air
             d += l*lp*(self.tempField[ip,jp]-self.tempField[i,j])
 
         return 0.25*d   
@@ -135,7 +144,7 @@ class Hive:
             for j in range(1,self.dims_temp[1]-1):
                 if self.hot_on and self.h(i,j):
                     continue
-                f_ij = f_mat[i,j] if ((i%2==0) and (j%2==0) and (self.beeGrid[-1][i//2,j//2]!=0)) else 0
+                f_ij = f_mat[i,j] if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)) else 0
                 self.tempField[i,j] += self.diff(i,j) + f_ij #+ self.f(i,j)
 
     def update(self,count):
@@ -158,12 +167,13 @@ class Hive:
         idxs = np.arange(self.colony.size)
         np.random.shuffle(idxs)
         for i in idxs:
-            self.colony[i].update(self.beeTempField,self.beeGrid[-1])
+            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd)
         
-        self.centroid = np.mean(np.argwhere(self.beeGrid[-1]),axis=0)
+        self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         self.Tc.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
         self.tempField_save.append(self.tempField.copy())
-        self.bg_save.append(self.beeGrid[-1].copy())
+        self.bg_save.append(self.beeGrid.copy())
+        self.bg2_save.append(self.beeGrid_2nd.copy())
         
     
     def compute_Tbee(self):

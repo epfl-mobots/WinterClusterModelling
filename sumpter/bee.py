@@ -5,11 +5,12 @@ import math
 FREE = 0
 STAT = 1
 MOV = 2
-ON_STAT = 3
-ON_MOV = 4
+# ON_STAT = 3
+# ON_MOV = 4
 
 # constant for switching back from explore to sumpter
 MAX_BOUNCE = 2
+
 
 class Bee:
     def __init__(self, x, y, param):
@@ -55,6 +56,8 @@ class Bee:
         next_pos = np.array([0,0])
         min_dist = 10000
         for ip,jp in zip([self.i-1,self.i,self.i+1,self.i],[self.j,self.j-1,self.j,self.j+1]):
+            if ip>self.imax or jp>self.jmax or beeGrid[ip,jp]!=FREE:
+                #cannot go out of the grid or pass on top of another bee
                 continue
             if np.linalg.norm(pos_dir-np.array([ip,jp]))<min_dist:
                 next_pos = np.array([ip,jp])
@@ -72,7 +75,7 @@ class Bee:
             # print(self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI))))
             return self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
 
-    def update(self,tempField,beeGrid):
+    def update(self,tempField,beeGrid,beeGrid_2nd):
         init_pos = np.array([self.i,self.j])
         '''print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])'''
 
@@ -81,17 +84,19 @@ class Bee:
             prob_alpha = self.prob_tr if self.prob_mode!='temp_dep' else self.update_prob(tempField[self.i,self.j])
             #random draw with a probability prob_alpha to go into leave mode
             leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
-            if leave:
+            if leave and beeGrid_2nd[self.i,self.j]==FREE: #if the bee 'wants' to leave + no bee is passing on top
                 self.state = 'leave'
                 self.draw_direction()
 
         elif self.state=='leave':
             #check if neighbouring spots are empty (if they are, leaving phase is over)
             nb_empty=0
-            for ip,jp in zip([self.i-1,self.i,self.i+1,self.i],[self.j,self.j-1,self.j,self.j+1]):
+            for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
                 if beeGrid[ip,jp]==FREE:
                     nb_empty+=1
-            if nb_empty==4:
+            if nb_empty==5: #if the spot the bee is in + neighbours are free in 1st layer of bees
+                beeGrid[self.i,self.j]=MOV # move the bee "down"
+                beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
                 self.state='explore'
 
         elif self.state=='explore':
@@ -158,15 +163,22 @@ class Bee:
                     beeGrid[self.i,self.j]=MOV
         
             elif self.state == 'leave':
-                if beeGrid[self.i,self.j]==ON_STAT:
-                    beeGrid[self.i,self.j]=STAT
-                elif beeGrid[self.i,self.j]==ON_MOV:
-                    beeGrid[self.i,self.j]=MOV
+                if beeGrid_2nd[self.i,self.j]==FREE: #if the bee is not on the 2nd layer
+                    beeGrid[self.i,self.j]=FREE # move the bee "up" (free the spot on first layer)
                 else:
-                    beeGrid[self.i,self.j]=FREE
+                    beeGrid_2nd[self.i,self.j]=FREE
+                
+                self.move_toward_dir(beeGrid_2nd,init_pos)
+                
+                # update beeGrid_2nd with the new position (and if bee is static or moved)
+                if self.i==init_pos[0] and self.j==init_pos[1]:
+                    beeGrid_2nd[self.i,self.j]=STAT
+                else:
+                    beeGrid_2nd[self.i,self.j]=MOV
 
-                self.move_toward_dir(beeGrid,init_pos)
-
+            elif self.state=='explore':
+                beeGrid[self.i,self.j]=FREE
+                
                 # if hit a wall, draw a new direction on another wall
                 if self.i == self.imax:
                     self.draw_direction(exclude='down')
@@ -178,12 +190,12 @@ class Bee:
                     self.draw_direction(exclude='left')
 
                 self.move_toward_dir(beeGrid,init_pos)
-                
-            # update beeGrid with the new position (and if bee is static or moved)
-            if self.i==init_pos[0] and self.j==init_pos[1]:
-                beeGrid[self.i,self.j]=1
-            else:
-                beeGrid[self.i,self.j]=2
+
+                # update beeGrid with the new position (and if bee is static or moved)
+                if self.i==init_pos[0] and self.j==init_pos[1]:
+                    beeGrid[self.i,self.j]=STAT
+                else:
+                    beeGrid[self.i,self.j]=MOV
             
                 
 

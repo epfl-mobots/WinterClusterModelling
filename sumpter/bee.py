@@ -30,11 +30,39 @@ class Bee:
         self.direction = np.array([0,0])
         self.bounced = 0
     
-    def draw_direction(self, exclude='none'):
+    def draw_direction_new(self, exclude='none'):
+        theta = np.deg2rad(np.random.randint(0,360))
+
+        beta_ru = np.arctan2(self.i,self.jmax+1-self.j)
+        beta_lu = np.arctan2(self.i,-self.j)
+        beta_ld = 2*np.pi+np.arctan2(self.imax+1-self.i,-self.j)
+        beta_ld = 2*np.pi+np.arctan2(self.imax+1-self.i,self.jmax+1-self.j)
+
+        if theta<beta_ru:
+            self.direction = np.array([0,self.jmax])
+
         borders = ['up','down','left','right']
         if exclude!='none':
             borders.remove(exclude)
         border = np.random.choice(borders)
+
+        if border=='up':
+            self.direction = np.array([0,np.random.randint(self.jmax+1)])
+        if border=='down':
+            self.direction = np.array([self.imax,np.random.randint(self.jmax+1)])
+        if border=='left':
+            self.direction = np.array([np.random.randint(self.imax+1),0])
+        if border=='right':
+            self.direction = np.array([np.random.randint(self.imax+1),self.jmax])
+        
+        if self.state == 'explore':
+            self.bounced += 1
+
+    def draw_direction(self, exclude='none'):
+        borders = ['up','down','left','right']
+        if exclude!='none':
+            borders.remove(exclude)
+        border = np.random.choice(borders,p=[1/3,1/3,1/6,1/6])
 
         if border=='up':
             self.direction = np.array([0,np.random.randint(self.jmax+1)])

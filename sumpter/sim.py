@@ -48,31 +48,39 @@ class Sim:
             draw.update(self.hive,self.savegraphpath,self.count)
     
     def end(self):
-        f = open(self.savepath+"beeGrid.obj", "wb")
+        self.save()
+        return
+    
+    def save(self):
+        pat = self.savepath+'/it_{}'.format(self.count)
+        if not os.path.isdir(pat):
+            os.mkdir(pat)
+        pat = pat+'/'
+        f = open(pat+"beeGrid.obj", "wb")
         pickle.dump(self.hive.bg_save,f)
         f.close()
 
-        f = open(self.savepath+"beeGrid_2nd.obj", "wb")
+        f = open(pat+"beeGrid_2nd.obj", "wb")
         pickle.dump(self.hive.bg2_save,f)
         f.close()
 
-        f = open(self.savepath+"T_field.obj", "wb")
+        f = open(pat+"T_field.obj", "wb")
         pickle.dump(self.hive.tempField_save,f)
         f.close()
 
-        f = open(self.savepath+"Tc.obj", "wb")
+        f = open(pat+"Tc.obj", "wb")
         pickle.dump(self.hive.Tc,f)
         f.close()
 
-        f = open(self.savepath+"Tmax.obj", "wb")
+        f = open(pat+"Tmax.obj", "wb")
         pickle.dump(self.hive.Tmax,f)
         f.close()
 
-        f = open(self.savepath+"meanT.obj", "wb")
+        f = open(pat+"meanT.obj", "wb")
         pickle.dump(self.hive.meanT,f)
         f.close()
 
-        f = open(self.savepath+"sigT.obj", "wb")
+        f = open(pat+"sigT.obj", "wb")
         pickle.dump(self.hive.sigT,f)
         f.close()
         return

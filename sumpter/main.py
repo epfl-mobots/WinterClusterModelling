@@ -32,16 +32,17 @@ hive_param = {
     "gamma" : np.log(2.4)/10
 }'''
 
-EXPERIMENTS = False
+EXPERIMENTS = True
 
-if EXPERIMENTS :
-    dr = [10,1000,1000]
+if EXPERIMENTS : #bunch of simulations
+    c=0
+    dr = [1,100,1000]
 
-    hotspot_positions = [2,4]#3
-    ambient_temperatures = [9,13,15]
+    alphas = [0.001]#[2,4]#3
+    ambient_temperatures = [9,13]
     folds = 3
 
-    for h in hotspot_positions:
+    for a in alphas:
         for T_amb in ambient_temperatures:
             for k in range(folds):
                 bee_param = {
@@ -49,17 +50,19 @@ if EXPERIMENTS :
                     "TminI" : 18,
                     "TmaxI" : 23,
                     "xmax"  : 49,
-                    "ymax"  : 99
+                    "ymax"  : 99,
+                    "prob_mode" : 'temp_dep',
+                    "alpha" : 0.001
                 }
 
                 hotspot = {
-                    "coord" : [[0,h],[1,h]], #change
+                    "coord" : [[0,4],[1,4]], #change
                     "Tspot" : 20.5, #change
-                    "on" : 1000 #change
+                    "on" : 200 #change
                 }
 
                 hive_param = {
-                    "init_shape" : "random",
+                    "init_shape" : "disc",
                     "dims_b" : (50,100),
                     "n_bees" : 200,
                     "tau" : 8,
@@ -72,17 +75,24 @@ if EXPERIMENTS :
                     "hq20" : 0.037,
                     "gamma" : np.log(2.4)/10
                 }
-                SIM_TIME = 3000 #in bee timesteps
+
+                if T_amb==13:
+                    SIM_TIME = 4000 #in bee timesteps
+                if T_amb==9:
+                    SIM_TIME = 5000 #in bee timesteps
 
                 sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=dr[k]) #the simulation is redrawn every DRAW_T steps
-                for i in range(SIM_TIME):
+                for i in tqdm(range(SIM_TIME)):
                     sim.update()
-                    print(i)
+                    if i%1000==0:
+                        sim.save()
 
                 sim.end()
+                print(c)
+                c=c+1
 
 
-else:
+else: #only one simulation
     bee_param = {
         "Tcoma" : 8,
         "TminI" : 18,
@@ -97,7 +107,7 @@ else:
         "coord" : [[0,4],[1,4]], #change
         "Tspot" : 20.5, #change
         "on" : 200, #change
-        "off" : 700
+        "off" : 5000
     }
 
     hive_param = {
@@ -114,11 +124,13 @@ else:
         "hq20" : 0.037,
         "gamma" : np.log(2.4)/10
     }
-    SIM_TIME = 2000 #in bee timesteps
+    SIM_TIME = 4000 #in bee timesteps
 
     sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=1) #the simulation is redrawn every DRAW_T steps
     for i in tqdm(range(SIM_TIME)):
         sim.update()
+        if i%1000==0:
+            sim.save()
         #print(i)
 
     sim.end()

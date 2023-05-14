@@ -5,8 +5,8 @@ import numpy as np
 import gc
 from bee import FREE, STAT, MOV
 
-T_MIN_DRAW = 9
-T_MAX_DRAW = 27
+T_MIN_DRAW = 5
+T_MAX_DRAW = 25
 SIZE_BEE = 1
 
 colors=[]
@@ -20,7 +20,7 @@ def update(hive,path,count=0):
     #plotting temperatures as background
     #temp_colors = (-1/(T_MAX_DRAW-T_MIN_DRAW))*hive.tempField+(T_MAX_DRAW/(T_MAX_DRAW-T_MIN_DRAW))*np.ones_like(hive.tempField)
     #plt.matshow(hive.tempField,fignum=count,cmap=cmap_temp,vmin=0,vmax=0.9,aspect='equal',interpolation='none',origin='lower')
-    plt.matshow(hive.tempField,fignum=count,cmap=cmap_temp,aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
+    plt.matshow(hive.tempField,fignum=count,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
 
     #color bar
     #vals = 0.1*np.array(range(0,10))
@@ -32,14 +32,14 @@ def update(hive,path,count=0):
     for b in hive.colony:
         if b.state=='sumpter' :
             if hive.beeGrid_2nd[b.i,b.j]!=FREE: #if there is a bee in the 2nd layer
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=1.5*SIZE_BEE)
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='orange',s=1.5*SIZE_BEE)
             else:
                 plt.scatter(b.j*hive.g,b.i*hive.g,c='black',s=SIZE_BEE)
         elif b.state=='leave':
             if hive.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=1.5*SIZE_BEE)
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='orange',s=1.5*SIZE_BEE)
             else:
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE,marker='D')
+                plt.scatter(b.j*hive.g,b.i*hive.g,c='orange',s=SIZE_BEE,marker='D')
         elif b.state=='explore':
             plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE)
 

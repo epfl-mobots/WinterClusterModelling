@@ -26,15 +26,21 @@ class Hive:
         self.hot_on=False
         self.hotspot = hotspot
         if type(hotspot)!=bool:
-            #computing position of possible hotspots depending on the temperature field dimensions
-            self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
-            self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
-            self.sz_spot = int(0.34*self.dims_temp[0])
+            if hotspot['coord']!=[]:
+                #computing position of possible hotspots depending on the temperature field dimensions
+                self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
+                self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
+                self.sz_spot = int(0.34*self.dims_temp[0])
 
-            #setting position of hotspot
-            self.n_spot = len(hotspot['coord'])
-            self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in hotspot['coord']]#(self.i_hot[param["i_hotspot"]],self.j_hot[param["j_hotspot"]])
-            self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in hotspot['coord']]
+                #setting position of hotspot
+                self.n_spot = len(hotspot['coord'])
+                self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in hotspot['coord']]#(self.i_hot[param["i_hotspot"]],self.j_hot[param["j_hotspot"]])
+                self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in hotspot['coord']]
+            else:
+                self.n_spot = 1
+                self.hotspot_i = [[int((hotspot['i_c']-hotspot['sz']/2)*self.dims_temp[0]),int((hotspot['i_c']+hotspot['sz']/2)*self.dims_temp[0])]]
+                self.hotspot_j = [[int((hotspot['j_c']-hotspot['sz']/4)*self.dims_temp[1]),int((hotspot['j_c']+hotspot['sz']/4)*self.dims_temp[1])]]
+
             self.Tspot = hotspot['Tspot']
             if hotspot['on']==0:
                 self.set_hotspot()
@@ -70,7 +76,7 @@ class Hive:
         for i in range(param["n_bees"]):
             if param["init_shape"]=="disc": # initially in disc offset from corner
                 offset = (self.dims_b[0]//2,self.dims_b[1]//4)
-                r = 7*random.random()
+                r = 7*int(np.sqrt(param["n_bees"]//200))*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
                 j_b = int(r*np.sin(theta))+offset[1]

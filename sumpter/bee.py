@@ -62,7 +62,12 @@ class Bee:
         borders = ['up','down','left','right']
         if exclude!='none':
             borders.remove(exclude)
-        border = np.random.choice(borders,p=[1/3,1/3,1/6,1/6])
+            if exclude=='up' or exclude=='down':
+                border = np.random.choice(borders,p=[1/2,1/4,1/4])
+            else:
+                border = np.random.choice(borders,p=[2/5,2/5,1/5])
+        else:
+            border = np.random.choice(borders,p=[1/3,1/3,1/6,1/6])
 
         if border=='up':
             self.direction = np.array([0,np.random.randint(self.jmax+1)])

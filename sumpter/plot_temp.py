@@ -5,6 +5,7 @@ import numpy as np
 import gc
 import os
 import glob
+from tqdm import tqdm
 
 # def xU(grid):
 #     exp = np.sum(grid[0])/49
@@ -18,7 +19,7 @@ import glob
 path = "C:/Users/Louise/Documents/EPFL/MA4/Project/data/"
 
 #dir = glob.glob(path+'2023-04-2*/')
-dir = [path+"2023-04-23T14_43_37/"]
+dir = [path+"2023-05-15T00_27_06/"]
 plt.figure()
 for d in dir:
     if not os.path.isdir(d+"analysis"):
@@ -26,6 +27,10 @@ for d in dir:
     # get beegrid of the simulation
     f = open(d+"beeGrid.obj", "rb")
     bg = pickle.load(f)
+    f.close()
+
+    f = open(d+"beeGrid_2nd.obj", "rb")
+    bg_2 = pickle.load(f)
     f.close()
     bg = np.array(bg[1:])
 
@@ -41,11 +46,13 @@ for d in dir:
         os.mkdir(d+"analysis/combined")
     if not os.path.isdir(d+"analysis/grad_dir"):
         os.mkdir(d+"analysis/grad_dir")
+    
     times = range(0,len(temp_field)-1,10)
     
-    for t in times:
+    for t in tqdm(times):
         #plot with bee bars for columns
         per_col = np.sum((bg[t]!=0),axis=0)
+        per_col = per_col+np.sum((bg_2[t]!=0),axis=0)
         plt.bar(range(len(per_col)),per_col)
         plt.ylim((0,100))
         #plt.show()

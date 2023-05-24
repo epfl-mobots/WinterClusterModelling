@@ -22,13 +22,13 @@ while(1):
     k = cv.waitKey(1) & 0xFF
     if k == ord('n'):
         #save annotated image
-        cv.imwrite("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/frame_{}.png".format(i),frame)
+        cv.imwrite("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/track/frame_{}.png".format(i),frame)
         #get next frame
         status, frame = video.read()
         i=i+1
     if k == ord('q'):
         print(positions)
-        f = open("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/tracking.obj", "wb")
+        f = open("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/track/tracking.obj", "wb")
         pickle.dump(positions,f)
         f.close()
         break

@@ -32,19 +32,18 @@ hive_param = {
     "gamma" : np.log(2.4)/10
 }'''
 
-EXPERIMENTS = False
+EXPERIMENTS = True
 
 if EXPERIMENTS : #bunch of simulations
     c=0
     dr = [10,100,1000]
 
-    alphas = [0.001]#[2,4]#3
+    alphas = [0.001,0]#[2,4]#3
     ambient_temperatures = [9,13]
-    n_bees = [200,400]
-    folds = 1
+    n_bees = [200]
+    folds = 2
 
-    a = 0.001
-    for n_b in n_bees:
+    for a in alphas:
         for T_amb in ambient_temperatures:
             for k in range(folds):
                 bee_param = {
@@ -54,20 +53,23 @@ if EXPERIMENTS : #bunch of simulations
                     "xmax"  : 49,
                     "ymax"  : 99,
                     "prob_mode" : 'temp_dep',
-                    "alpha" : 0.001
+                    "alpha" : a
                 }
 
                 hotspot = {
-                    "coord" : [[0,4],[1,4]], #change
+                    "j_c" : 4/5,
+                    "i_c" : 1/2,
+                    "sz" : 1/4,
+                    "coord" : [],
                     "Tspot" : 20.5, #change
-                    "on" : 200, #change
-                    "off" : 6000
+                    "on" : 0, #change
+                    "off" : 100000
                 }
 
                 hive_param = {
                     "init_shape" : "disc",
                     "dims_b" : (50,100),
-                    "n_bees" : n_b,#200,
+                    "n_bees" : 200,
                     "tau" : 8,
                     "g" : 2,
                     "bee_param" : bee_param,

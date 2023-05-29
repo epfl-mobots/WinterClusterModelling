@@ -10,7 +10,11 @@ import draw
 class Sim:
     def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10):
         #create save directory for plots and data
-        path = '../data/'
+        if hive_param["bee_param"]["alpha"]==0:
+            path = '../data/{}C/sump/'.format(hive_param["tempA"])
+        else:
+            path = '../data/{}C/exp/'.format(hive_param["tempA"])
+
         today = datetime.datetime.now()
         todaystr = today.isoformat()
         todaystr = todaystr.replace(":","_")[0:19]

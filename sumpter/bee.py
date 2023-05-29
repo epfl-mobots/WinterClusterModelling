@@ -125,16 +125,20 @@ class Bee:
             #check if neighbouring spots are empty (if they are, leaving phase is over)
             nb_empty=0
             for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
+                if jp<1 or jp>self.jmax or ip<1 or ip>self.imax:
+                    continue
                 if beeGrid[ip,jp]==FREE:
                     nb_empty+=1
             if nb_empty==5: #if the spot the bee is in + neighbours are free in 1st layer of bees
-                beeGrid[self.i,self.j]=MOV # move the bee "down"
-                beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
+                # beeGrid[self.i,self.j]=MOV # move the bee "down"
+                # beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
                 self.state='explore'
 
         elif self.state=='explore':
             #go back to sumpter if local temp is comfy or if bounced twice
             if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=MAX_BOUNCE:
+                beeGrid[self.i,self.j]=MOV # move the bee "down"
+                beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
                 self.state='sumpter'
                 self.bounced = 0
 
@@ -210,7 +214,7 @@ class Bee:
                     beeGrid_2nd[self.i,self.j]=MOV
 
             elif self.state=='explore':
-                beeGrid[self.i,self.j]=FREE
+                beeGrid_2nd[self.i,self.j]=FREE
                 
                 # if hit a wall, draw a new direction on another wall
                 if self.i == self.imax:
@@ -222,13 +226,13 @@ class Bee:
                 if self.j == 0:
                     self.draw_direction(exclude='left')
 
-                self.move_toward_dir(beeGrid,init_pos)
+                self.move_toward_dir(beeGrid_2nd,init_pos)
 
                 # update beeGrid with the new position (and if bee is static or moved)
                 if self.i==init_pos[0] and self.j==init_pos[1]:
-                    beeGrid[self.i,self.j]=STAT
+                    beeGrid_2nd[self.i,self.j]=STAT
                 else:
-                    beeGrid[self.i,self.j]=MOV
+                    beeGrid_2nd[self.i,self.j]=MOV
             
                 
 

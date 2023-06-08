@@ -4,7 +4,7 @@ import pickle
 
 def terminate():
   print(positions)
-  f = open("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf/tracking.obj", "wb")
+  f = open("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf_blank/tracking.obj", "wb")
   pickle.dump(positions,f)
   f.close()
 
@@ -42,7 +42,7 @@ cv.setMouseCallback('image',draw_ellipse)
 
 path = "C:/Users/Louise/Documents/EPFL/MA4/Project/video_data/"
 vid_files = [path+"hive5_rpi1_day-2201{}.mp4".format(i) for i in range(11,21)]
-vid_files = ["C:/Users/Louise/Documents/EPFL/MA4/Project/video_data/hive5_rpi1_day-220120.mp4"]
+vid_files = ["C:/Users/Louise/Documents/EPFL/MA4/Project/experimental data/video_data/hive5_rpi1_day-220116.mp4"]
 
 for vf in vid_files:
   print(vf)
@@ -63,7 +63,8 @@ for vf in vid_files:
           frame = blank_frame.copy()
       if k == ord('n'):
           #save annotated image
-          cv.imwrite("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf/{}_frame_{}.png".format(vf[69:],900*i),frame)
+          #print("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf_blank/{}_frame_{}.png".format(vf[87:-4],900*i))
+          cv.imwrite("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf_blank/{}_frame_{}.png".format(vf[87:-4],900*i),frame)
           i=i+1
           
           #get next frame

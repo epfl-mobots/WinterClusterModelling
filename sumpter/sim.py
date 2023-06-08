@@ -8,7 +8,7 @@ import draw
 
 
 class Sim:
-    def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10):
+    def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10, load_saved=False):
         #create save directory for plots and data
         if hive_param["bee_param"]["alpha"]==0:
             path = '../data/{}C/sump/'.format(hive_param["tempA"])
@@ -32,8 +32,14 @@ class Sim:
             f.write(str(k) + ' : '+ str(v) + '\n\n')
         f.close()
 
-        #initialize hive and graphic
-        self.hive = Hive(hive_param,hotspot)
+        if type(load_saved)==bool:
+            #initialize hive and graphic
+            self.hive = Hive(hive_param,hotspot)
+        else:
+            f = open(load_saved+"/hive.obj", "rb")
+            self.hive = pickle.load(f)
+            f.close()
+        
         self.draw_on = draw_on
         if draw_on:
             self.start_graphic()
@@ -56,6 +62,16 @@ class Sim:
         return
     
     def save(self):
+        pat = self.savepath+'/it_{}'.format(self.count)
+        if not os.path.isdir(pat):
+            os.mkdir(pat)
+        pat = pat+'/'
+        f = open(pat+"hive.obj", "wb")
+        pickle.dump(self.hive,f)
+        f.close()
+
+
+    def save_old(self):
         pat = self.savepath+'/it_{}'.format(self.count)
         if not os.path.isdir(pat):
             os.mkdir(pat)

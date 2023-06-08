@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import sys
+sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
 from bee import Bee
 
 # constants describing the beeGrid state

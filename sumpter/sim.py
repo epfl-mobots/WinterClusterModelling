@@ -1,3 +1,4 @@
+"""Definition of Sim class handling the saving and calling graphics generation"""
 import os, datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,6 +10,13 @@ import draw
 
 class Sim:
     def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10, load_saved=False):
+        """Initialisation of the simulation
+        hive_param : parameters of the hive
+        draw_on : boolean value for graphics generation (no graphics if False)
+        hotspot : False or hotspot parameters
+        draw_t : graphics refresh rate (in number of simulation timesteps)
+        load_saved : False or path of Hive object to load from
+        """
         #create save directory for plots and data
         if hive_param["bee_param"]["alpha"]==0:
             path = '../data/{}C/sump/'.format(hive_param["tempA"])
@@ -70,7 +78,6 @@ class Sim:
         pickle.dump(self.hive,f)
         f.close()
 
-
     def save_old(self):
         pat = self.savepath+'/it_{}'.format(self.count)
         if not os.path.isdir(pat):
@@ -104,47 +111,3 @@ class Sim:
         pickle.dump(self.hive.sigT,f)
         f.close()
         return
-
-# #------------------------------------------------------------------------------
-
-# bee_param = {
-#     "Tcoma" : 8,
-#     "TminI" : 18,
-#     "TmaxI" : 23,
-#     "xmax"  : 49,
-#     "ymax"  : 99
-# }
-
-# hotspot = {
-#     "coord" : [[0,3],[1,3]],
-#     "Tspot" : 25,
-#     "on" : 0
-# }
-
-# hive_param = {
-#     "init_shape" : "disc",
-#     "dims_b" : (50,100),
-#     "n_bees" : 200,
-#     "tau" : 13,
-#     "g" : 2,
-#     "bee_param" : bee_param,
-#     "dims_temp" : (100,200), #twice as big as dims_b in Sumpter (twice finer grid)
-#     "tempA" : 13,
-#     "lambda_air" : 1.0,
-#     "lambda_bee" : 0.45,
-#     "hq20" : 0.037,#0.0037,
-#     "gamma" : np.log(2.4)/10
-# }
-
-# SIM_TIME = 200 #in bee timesteps
-# DRAW_T = 10 #the simulation is redrawn every DRAW_T steps
-
-# sim = Sim(hive_param,draw_on=True,hotspot=hotspot)
-# for i in range(SIM_TIME):
-#     sim.update()
-#     print(i)
-
-# #keyboard.wait('q')
-# plt.plot(range(SIM_TIME),sim.hive.Tc[1:])
-# plt.show()
-# sim.end()

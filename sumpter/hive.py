@@ -8,6 +8,10 @@ from bee import Bee, FREE, STAT, MOV
 
 class Hive:
     def __init__(self, param, hotspot):
+        """Initialisation of hive object
+        param : parameters of the temperature field and agents
+        hotspot : either False or parameters of the hotspot
+        """
         self.param = param
         self.tau = param["tau"]
         self.g = param["g"]
@@ -70,6 +74,7 @@ class Hive:
 
 
     def init_colony(self,param):
+        """Build the list of agents (Bee objects) by random draw according to param."""
         bs = []
         for i in range(param["n_bees"]):
             if param["init_shape"]=="disc": #initially in disc offset from corner
@@ -107,21 +112,26 @@ class Hive:
         return bs
 
     def init_temp(self):
+        """Update the temperature field only (no agent movement)"""
         for _ in range(1000):
             self.update_temp()
 
     def set_hotspot(self):
+        """Turn on the hotspot. Sets its area to a fixed temperature."""
         self.hot_on = True
         for a,b in zip(self.hotspot_i,self.hotspot_j):
             self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
 
     def f(self,i,j):
+        """Compute the metabolic temperature contribution of the agent at position (i,j).
+        Returns 0 if no agent is at this position.
+        """
         if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)):
             return self.hq20*np.exp(self.gamma*(self.tempField[i,j]-20))
-
         return 0
 
     def diff(self,i,j):
+        """Compute the diffusion term in the temperature equation for position (i,j)."""
         d = 0
         l = self.l_bee if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]==STAT)) else self.l_air
 
@@ -132,14 +142,14 @@ class Hive:
         return 0.25*d   
 
     def h(self,i,j):
+        """Checks whether position (i,j) is within the boundaries of the hotspot."""
         for n in range(self.n_spot):
             if i>self.hotspot_i[n][0] and i<self.hotspot_i[n][1] and j>self.hotspot_j[n][0] and j<self.hotspot_j[n][1]:
                 return True
         return False
 
     def update_temp(self):
-        # if self.hotspot:
-        #     self.tempField[self.hotspot[0],self.hotspot[1]] = self.Tspot
+        """Update the temperature field."""
         f_mat = self.hq20*np.exp(self.gamma*(self.tempField-20))
         for i in range(1,self.dims_temp[0]-1):
             for j in range(1,self.dims_temp[1]-1):
@@ -149,6 +159,10 @@ class Hive:
                 self.tempField[i,j] += self.diff(i,j) + f_ij #+ self.f(i,j)
 
     def update(self,count):
+        """Update the Hive state. Called at each timestep.
+        - count is the iteration number
+        """
+
         if self.hotspot['on']==count:
             self.set_hotspot()
         elif self.hot_on and self.hotspot['off']==count:
@@ -163,13 +177,15 @@ class Hive:
         self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1])
         self.meanT.append(np.mean(self.tempField))
         self.sigT.append(np.std(self.tempField))
-
+        
+        #Compute the temperature felt by the agents and update them
         self.compute_Tbee()
         idxs = np.arange(self.colony.size)
         np.random.shuffle(idxs)
         for i in idxs:
             self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd)
         
+        #Saving state
         self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         self.Tc.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
         self.tempField_save.append(self.tempField.copy())
@@ -178,6 +194,7 @@ class Hive:
         
     
     def compute_Tbee(self):
+        """Compute local average of temperature at each possible agent position."""
         for x in range(1,self.dims_b[0]):
             for y in range(1,self.dims_b[1]):
                 x_st = int(self.g*(x-0.5))

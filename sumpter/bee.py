@@ -15,6 +15,11 @@ MAX_BOUNCE = 2
 class Bee:
     """Agent definition"""
     def __init__(self, x, y, param):
+        """Initialisation of agent
+        x : i coordinate
+        y : j coordinate
+        param : agent characteristics (described in main.py)
+        """
         self.TminI = param["TminI"]
         self.TmaxI = param["TmaxI"]
         self.Tcoma = param["Tcoma"]

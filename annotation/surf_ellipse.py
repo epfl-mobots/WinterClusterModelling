@@ -1,3 +1,11 @@
+"""Frame-by-frame annotation of cluster surfaces on video data
+-  Click and drag to draw an ellipse inside the rectagle determined by "buttonDown" and "buttonUp" mouse positions.
+-  Left click draws a blue ellipse, right click draws a red ellipse
+-  Pressing 'z' erases the ellipses drawn on the current frame
+-  Pressing 'n' saves the annotated frame and shows the next
+-  Pressing 'q' saves everything and closes window
+"""
+
 import numpy as np
 import cv2 as cv
 import pickle
@@ -13,10 +21,10 @@ positions = []
 def draw_ellipse(action, x, y, flags, *userdata):
   # Referencing global variables 
   global p1, p2
-  # Mark the top left corner, when left mouse button is pressed
+  #Mark first point when mouse button is pressed
   if action == cv.EVENT_LBUTTONDOWN or action == cv.EVENT_RBUTTONDOWN:
     p1 = [(x,y)]
-    # When left mouse button is released, mark bottom right corner
+  #Mark second point when mouse button is released
   elif action == cv.EVENT_LBUTTONUP or action == cv.EVENT_RBUTTONUP:
     p2 = [(x,y)]
 
@@ -30,13 +38,13 @@ def draw_ellipse(action, x, y, flags, *userdata):
     b = abs(y1-y2)//2
     axes = (a,b)
 
-    # Draw the ellipse
+    #Draw the ellipse (blue or red)
     if action == cv.EVENT_LBUTTONUP:
       cv.ellipse(frame, center, axes, 0, 0, 360, (255,0,0),thickness=-1)
     else :
       cv.ellipse(frame, center, axes, 0, 0, 360, (0,0,255),thickness=-1)
 
-# Create a black image, a window and bind the function to window
+#Create a window and bind the function to the window
 cv.namedWindow('image',cv.WINDOW_KEEPRATIO)
 cv.setMouseCallback('image',draw_ellipse)
 
@@ -63,7 +71,6 @@ for vf in vid_files:
           frame = blank_frame.copy()
       if k == ord('n'):
           #save annotated image
-          #print("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf_blank/{}_frame_{}.png".format(vf[87:-4],900*i))
           cv.imwrite("C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf_blank/{}_frame_{}.png".format(vf[87:-4],900*i),frame)
           i=i+1
           

@@ -1,13 +1,10 @@
+"""Definition of Hive class which handles the agents (Bee objects) and the temperature field."""
+
 import numpy as np
 import random
 import sys
 sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
-from bee import Bee
-
-# constants describing the beeGrid state
-FREE = 0
-STAT = 1
-MOV = 2
+from bee import Bee, FREE, STAT, MOV
 
 class Hive:
     def __init__(self, param, hotspot):
@@ -20,8 +17,7 @@ class Hive:
         self.hq20 = param["hq20"]
         self.gamma = param["gamma"]
 
-        #temperature field initialization
-        #self.temp = TempField(param["temp_param"])
+        #temperature field initialization - initially homogenous at ambient temperature
         self.dims_temp = param["dims_temp"]
         self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
 
@@ -47,8 +43,7 @@ class Hive:
             if hotspot['on']==0:
                 self.set_hotspot()
 
-                
-        
+        #history of temperature field at every timestep
         self.tempField_save = [self.tempField]
 
         self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
@@ -70,13 +65,14 @@ class Hive:
         self.beeGrid_2nd = np.zeros(self.dims_b)
         self.bg2_save = [self.beeGrid_2nd.copy()]
 
+        #initial stage where only the temperature dynamics are active (no agent movement)
         #self.init_temp()
 
 
     def init_colony(self,param):
         bs = []
         for i in range(param["n_bees"]):
-            if param["init_shape"]=="disc": # initially in disc offset from corner
+            if param["init_shape"]=="disc": #initially in disc offset from corner
                 offset = (self.dims_b[0]//2,self.dims_b[1]//4)
                 r = 7*int(np.sqrt(param["n_bees"]//200))*random.random()
                 theta = 2*np.pi*random.random()
@@ -88,7 +84,7 @@ class Hive:
                     i_b = int(r*np.cos(theta))+offset[0]
                     j_b = int(r*np.sin(theta))+offset[1]
 
-            elif param["init_shape"]=="ring": # initially in ring in middle
+            elif param["init_shape"]=="ring": #initially in ring in middle
                 r = 7*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
@@ -99,18 +95,15 @@ class Hive:
                     i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
                     j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
 
-            else: # random initialization across grid
+            else: #random initialization across grid
                 i_b = 1 + int(random.random()*(self.dims_b[0]-2))
                 j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
                 while self.beeGrid[i_b,j_b]!=FREE:
                     i_b = 1 + int(random.random()*(self.dims_b[0]-2))
                     j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
             
-            self.beeGrid[i_b,j_b] = STAT
-            
-            # print(i," : ",i_b, ", ",j_b)
+            self.beeGrid[i_b,j_b] = STAT        
             bs.append(Bee(i_b,j_b,param["bee_param"]))
-
         return bs
 
     def init_temp(self):

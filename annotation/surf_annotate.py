@@ -1,16 +1,25 @@
+"""Frame-by-frame annotation of cluster surfaces on video data
+-  Click and drag to draw an ellipse passing through "buttonDown" and "buttonUp" mouse positions.
+-  Left click draws a blue ellipse, right click draws a red ellipse
+-  Pressing 'z' erases the ellipses drawn on the current frame
+-  Pressing 'n' saves the annotated frame and shows the next
+-  Pressing 'q' saves everything and closes window
+"""
+
 import numpy as np
 import cv2 as cv
 import pickle
 
 positions = []
 
-def draw_ellipse(action, x, y, flags, *userdata):
-  # Referencing global variables 
+def draw_ellipse(action, x, y):
+  """Callback function to draw ellipse
+  """
   global p1, p2
-  # Mark the top left corner, when left mouse button is pressed
+  #Mark first point when mouse button is pressed
   if action == cv.EVENT_LBUTTONDOWN or action == cv.EVENT_RBUTTONDOWN:
     p1 = [(x,y)]
-    # When left mouse button is released, mark bottom right corner
+  #Mark second point when mouse button is released
   elif action == cv.EVENT_LBUTTONUP or action == cv.EVENT_RBUTTONUP:
     p2 = [(x,y)]
 
@@ -35,17 +44,17 @@ def draw_ellipse(action, x, y, flags, *userdata):
     axes = (int(a),int(b))
     print(axes)
 
-    # Draw the ellipse
+    #Draw the ellipse (blue or red)
     if action == cv.EVENT_LBUTTONUP:
       cv.ellipse(frame, center, axes, 0, 0, 360, (255,0,0),thickness=-1)
     else :
       cv.ellipse(frame, center, axes, 0, 0, 360, (0,0,255),thickness=-1)
 
-# Create a black image, a window and bind the function to window
+#Create a window and bind the function to window
 cv.namedWindow('image',cv.WINDOW_KEEPRATIO)
 cv.setMouseCallback('image',draw_ellipse)
 
-video = cv.VideoCapture("C:/Users/Louise/Desktop/0512(1)-0736_0801.mp4")
+video = cv.VideoCapture("C:/Users/Louise/Desktop/0512.mp4")
 status, frame = video.read()
 blank_frame = frame.copy()
 i = 0

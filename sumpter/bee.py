@@ -1,3 +1,5 @@
+"""Defines the Bee class (agent class)."""
+
 import numpy as np
 import math
 
@@ -5,20 +7,23 @@ import math
 FREE = 0
 STAT = 1
 MOV = 2
-# ON_STAT = 3
-# ON_MOV = 4
 
 # constant for switching back from explore to sumpter
 MAX_BOUNCE = 2
 
 
 class Bee:
+    """Agent definition"""
     def __init__(self, x, y, param):
         self.TminI = param["TminI"]
         self.TmaxI = param["TmaxI"]
         self.Tcoma = param["Tcoma"]
+
+        #limits of the terrain
         self.imax = param['xmax']
         self.jmax = param['ymax']
+
+        #position
         self.i = x
         self.j = y
         self.met_rate = 0
@@ -30,35 +35,11 @@ class Bee:
         self.direction = np.array([0,0])
         self.bounced = 0
     
-    def draw_direction_new(self, exclude='none'):
-        theta = np.deg2rad(np.random.randint(0,360))
-
-        beta_ru = np.arctan2(self.i,self.jmax+1-self.j)
-        beta_lu = np.arctan2(self.i,-self.j)
-        beta_ld = 2*np.pi+np.arctan2(self.imax+1-self.i,-self.j)
-        beta_ld = 2*np.pi+np.arctan2(self.imax+1-self.i,self.jmax+1-self.j)
-
-        if theta<beta_ru:
-            self.direction = np.array([0,self.jmax])
-
-        borders = ['up','down','left','right']
-        if exclude!='none':
-            borders.remove(exclude)
-        border = np.random.choice(borders)
-
-        if border=='up':
-            self.direction = np.array([0,np.random.randint(self.jmax+1)])
-        if border=='down':
-            self.direction = np.array([self.imax,np.random.randint(self.jmax+1)])
-        if border=='left':
-            self.direction = np.array([np.random.randint(self.imax+1),0])
-        if border=='right':
-            self.direction = np.array([np.random.randint(self.imax+1),self.jmax])
-        
-        if self.state == 'explore':
-            self.bounced += 1
 
     def draw_direction(self, exclude='none'):
+        """Compute new target point for the agent movement.
+        - exclude can be 'none' or one of the borders. Points from this border are excluded from the draw.
+        """
         borders = ['up','down','left','right']
         if exclude!='none':
             borders.remove(exclude)
@@ -78,13 +59,12 @@ class Bee:
         if border=='right':
             self.direction = np.array([np.random.randint(self.imax+1),self.jmax])
         
+        #Update bounce counter for exploratory mode
         if self.state == 'explore':
             self.bounced += 1
         
     def move_toward_dir(self,beeGrid,init_pos):
-        #print("initial position : ",self.i, " ", self.j)
         pos_dir = init_pos + (1/np.linalg.norm(self.direction-init_pos))*(self.direction-init_pos)
-        #print("direct_pos : ", pos_dir)
 
         next_pos = np.array([0,0])
         min_dist = 10000
@@ -99,18 +79,17 @@ class Bee:
         if min_dist!=10000: #if there is a free spot somewhere around that the bee will move to
             self.i = next_pos[0]
             self.j = next_pos[1]
-
-        #print("next_pos : ", [self.i,self.j])
     
     def update_prob(self, temp):
+        """Compute the probability of an agent to go from 'sumpter' to 'leave' mode based on temp."""
         if self.prob_mode == 'temp_dep':
             # print(temp)
             # print(self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI))))
             return self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
 
     def update(self,tempField,beeGrid,beeGrid_2nd):
+        """Update of the agent state and position."""
         init_pos = np.array([self.i,self.j])
-        '''print("initial position : ",self.i, " ", self.j, " ", tempField[self.i,self.j])'''
 
         #STATE RE_EVALUATION
         if self.state=='sumpter':
@@ -130,8 +109,6 @@ class Bee:
                 if beeGrid[ip,jp]==FREE:
                     nb_empty+=1
             if nb_empty==5: #if the spot the bee is in + neighbours are free in 1st layer of bees
-                # beeGrid[self.i,self.j]=MOV # move the bee "down"
-                # beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
                 self.state='explore'
 
         elif self.state=='explore':
@@ -157,10 +134,8 @@ class Bee:
                     if jp<1 or jp>self.jmax or ip<1 or ip>self.imax:
                         continue
                     if beeGrid[ip,jp]==FREE:
-                        '''print("[",ip,",",jp,"]:",tempField[ip,jp])'''
                         if tempField[ip,jp]<=self.TmaxI and tempField[ip,jp]>=self.TminI:
                             xy_TI.append([ip,jp])
-                            '''print(ip," ",jp)'''
                         else:
                             xy_free.append([ip,jp])
                             temp_free.append(abs(tempField[ip,jp]-0.5*(self.TmaxI+self.TminI)))
@@ -180,7 +155,6 @@ class Bee:
                         self.j = xy_free[0][1]
                     else:
                         idxs = np.where(temp_free==min(temp_free))
-                        '''print("indexes of closest temps : ",idxs)'''
                         if len(idxs)==1:
                             idx = idxs[0][0]
                         else: 
@@ -189,10 +163,6 @@ class Bee:
                             self.i = xy_free[idx][0]
                             self.j = xy_free[idx][1]
                 
-                '''print("neighbors with appropriate temperature :", xy_TI)
-                print("other free neighbor spots : ", xy_free)
-                print("temps ", temp_free)
-                print("end position : ",self.i, " ", self.j)'''
                 # update beeGrid with the new position (and if bee is static or moved)
                 if self.i==init_pos[0] and self.j==init_pos[1]:
                     beeGrid[self.i,self.j]=STAT

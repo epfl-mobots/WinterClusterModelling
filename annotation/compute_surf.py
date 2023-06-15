@@ -1,8 +1,9 @@
+"""Computation of blue and red pixel surfaces (from annotation with surf_ellipse)"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 import cv2
-
 
 path = "C:/Users/Louise/Documents/EPFL/MA4/Project/data/annotations/surf/"
 files = glob.glob(path+'2201*.png')

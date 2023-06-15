@@ -1,3 +1,10 @@
+"""Definition of plotting functions to analyze the data generated during a simulation
+- plot_temperature
+- plot_bee_distrib
+- plot_combined
+- plot_combined_hive
+"""
+
 import matplotlib.pyplot as plt
 import matplotlib
 import pickle
@@ -12,6 +19,10 @@ from sumpter.hive import Hive
 from sumpter.bee import Bee
 
 def plot_temperature(srcDir):
+    """ Plots centroid and max temperature across rows from data in srcDir. 
+    One plot is created for each timestep of the simulation and saved in the "analysis" subfolder.
+    ONLY WORKS FOR OLD WAY OF SAVING DATA
+    """
     if not os.path.isdir(srcDir+"/analysis"):
         os.mkdir(srcDir+"/analysis")
 
@@ -45,6 +56,10 @@ def plot_temperature(srcDir):
 
 
 def plot_bee_distrib(srcDir):
+    """ Plots bee distribution by column from data in srcDir. 
+    One plot is created for each timestep of the simulation and saved in the "analysis" subfolder.
+    ONLY WORKS FOR OLD WAY OF SAVING DATA
+    """
     if not os.path.isdir(srcDir+"/analysis"):
         os.mkdir(srcDir+"/analysis")
 
@@ -80,6 +95,10 @@ def plot_bee_distrib(srcDir):
 
 
 def plot_combined(srcDir):
+    """ Plots bee distribution by column along with centroid and max temperature from data in srcDir. 
+    One plot is created for each timestep of the simulation and saved in the "analysis" subfolder.
+    ONLY WORKS FOR OLD WAY OF SAVING DATA
+    """
     if not os.path.isdir(srcDir+"/analysis"):
         os.mkdir(srcDir+"/analysis")
 
@@ -147,6 +166,9 @@ def plot_combined(srcDir):
         gc.collect()
 
 def plot_combined_hive(srcDir):
+    """ Plots bee distribution by column along with centroid and max temperature from data in srcDir. 
+    One plot is created for each timestep of the simulation and saved in the "analysis" subfolder.
+    """
     if not os.path.isdir(srcDir+"/analysis"):
         os.mkdir(srcDir+"/analysis")
 

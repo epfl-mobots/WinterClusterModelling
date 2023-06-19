@@ -1,4 +1,4 @@
-"""Definition of Hive class which handles the agents (Bee objects) and the temperature field."""
+"""Definition of Frame class which handles the agents (Bee objects) and the temperature field."""
 
 import numpy as np
 import random
@@ -6,9 +6,9 @@ import sys
 sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
 from bee import Bee, FREE, STAT, MOV
 
-class Hive:
+class Frame:
     def __init__(self, param, hotspot):
-        """Initialisation of hive object
+        """Initialisation of Frame object
         param : parameters of the temperature field and agents
         hotspot : either False or parameters of the hotspot
         """
@@ -159,7 +159,7 @@ class Hive:
                 self.tempField[i,j] += self.diff(i,j) + f_ij #+ self.f(i,j)
 
     def update(self,count):
-        """Update the Hive state. Called at each timestep.
+        """Update the Frame state. Called at each timestep.
         - count is the iteration number
         """
 

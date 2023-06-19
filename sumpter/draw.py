@@ -18,28 +18,28 @@ for i in range(5):
     colors.append(col)
 cmap_temp = LinearSegmentedColormap.from_list("mycmap", colors)
 
-def update(hive,path,count=0):
-    """Draw the simulation state described by hive and save image in path"""
+def update(frame,path,count=0):
+    """Draw the simulation state described by frame and save image in path"""
     #plotting temperatures as background
-    plt.matshow(hive.tempField,fignum=count,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
+    plt.matshow(frame.tempField,fignum=count,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
 
     #color bar
-    plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=range(int(np.min(hive.tempField)),int(np.max(hive.tempField)+2)))
+    plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=range(int(np.min(frame.tempField)),int(np.max(frame.tempField)+2)))
 
     #plotting bees
-    for b in hive.colony:
+    for b in frame.colony:
         if b.state=='sumpter' :
-            if hive.beeGrid_2nd[b.i,b.j]!=FREE: #if there is a bee in the 2nd layer
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='orange',s=1.5*SIZE_BEE)
+            if frame.beeGrid_2nd[b.i,b.j]!=FREE: #if there is a bee in the 2nd layer
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=1.5*SIZE_BEE)
             else:
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='black',s=SIZE_BEE)
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='black',s=SIZE_BEE)
         elif b.state=='leave':
-            if hive.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='orange',s=1.5*SIZE_BEE)
+            if frame.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=1.5*SIZE_BEE)
             else:
-                plt.scatter(b.j*hive.g,b.i*hive.g,c='orange',s=SIZE_BEE,marker='D')
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=SIZE_BEE,marker='D')
         elif b.state=='explore':
-            plt.scatter(b.j*hive.g,b.i*hive.g,c='red',s=SIZE_BEE)
+            plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=SIZE_BEE)
 
     #remove axes ticks
     plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False,labeltop=False)

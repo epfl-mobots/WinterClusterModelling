@@ -15,7 +15,7 @@ import glob
 from tqdm import tqdm
 import sys
 sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling")
-from sumpter.hive import Hive
+from sumpter.frame import Frame
 from sumpter.bee import Bee
 
 def plot_temperature(srcDir):
@@ -173,7 +173,7 @@ def plot_combined_hive(srcDir):
         os.mkdir(srcDir+"/analysis")
 
     # get beegrid of the simulation
-    f = open(srcDir+"/hive.obj", "rb")
+    f = open(srcDir+"/frame.obj", "rb")
     hi = pickle.load(f)
     f.close()
 

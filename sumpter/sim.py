@@ -4,34 +4,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-from hive import Hive
+from frame import Frame
 import draw
 
 
 class Sim:
     def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10, load_saved=False):
         """Initialisation of the simulation
-        hive_param : parameters of the hive
+        frame_param : parameters of the frame
         draw_on : boolean value for graphics generation (no graphics if False)
         hotspot : False or hotspot parameters
         draw_t : graphics refresh rate (in number of simulation timesteps)
-        load_saved : False or path of Hive object to load from
+        load_saved : False or path of Frame object to load from
         """
-        #create save directory for plots and data
+
+        #Create save directory for plots and data
         if hive_param["bee_param"]["alpha"]==0:
             path = '../data/{}C/sump/'.format(hive_param["tempA"])
         else:
             path = '../data/{}C/exp/'.format(hive_param["tempA"])
 
-        today = datetime.datetime.now()
-        todaystr = today.isoformat()
+        todaystr = datetime.datetime.now().isoformat()
         todaystr = todaystr.replace(":","_")[0:19]
         self.savepath = path+todaystr+'/'
-        self.savegraphpath = path+todaystr+"/graphics/"
+        self.savegraphpath = self.savepath+"graphics/"
         if not os.path.isdir(path+todaystr):
             os.mkdir(path+todaystr)
             os.mkdir(path+todaystr+"/graphics")
 
+        # Save parameters as a txt file in the dir
         f = open(self.savepath+"parameters.txt", "a")
         for k, v in hive_param.items():
             f.write(str(k) + ' : '+ str(v) + '\n\n')
@@ -40,12 +41,13 @@ class Sim:
             f.write(str(k) + ' : '+ str(v) + '\n\n')
         f.close()
 
-        if type(load_saved)==bool:
-            #initialize hive and graphic
-            self.hive = Hive(hive_param,hotspot)
+        # Find parameters for frame, either from scratch or from save
+        if load_saved is False:
+            #initialize frame and graphic
+            self.frame = Frame(hive_param,hotspot)
         else:
-            f = open(load_saved+"/hive.obj", "rb")
-            self.hive = pickle.load(f)
+            f = open(load_saved+"/frame.obj", "rb")
+            self.frame = pickle.load(f)
             f.close()
         
         self.draw_on = draw_on
@@ -57,57 +59,62 @@ class Sim:
         
         
     def start_graphic(self):
-        draw.update(self.hive,self.savegraphpath)
+        draw.update(self.frame,self.savegraphpath)
 
     def update(self):
-        self.hive.update(self.count)
+        self.frame.update(self.count)
         self.count+=1
         if self.draw_on and self.count%self.draw_t==0:
-            draw.update(self.hive,self.savegraphpath,self.count)
+            draw.update(self.frame,self.savegraphpath,self.count)
     
     def end(self):
         self.save()
         return
     
+    """
+    Saves the Frame parameters
+    """
     def save(self):
-        pat = self.savepath+'/it_{}'.format(self.count)
+        pat = self.savepath+f"/it_{self.count}"
         if not os.path.isdir(pat):
             os.mkdir(pat)
-        pat = pat+'/'
-        f = open(pat+"hive.obj", "wb")
-        pickle.dump(self.hive,f)
+        f = open(pat+"/frame.obj", "wb")
+        pickle.dump(self.frame,f)
         f.close()
 
+"""
+Not used
+"""
     def save_old(self):
         pat = self.savepath+'/it_{}'.format(self.count)
         if not os.path.isdir(pat):
             os.mkdir(pat)
         pat = pat+'/'
         f = open(pat+"beeGrid.obj", "wb")
-        pickle.dump(self.hive.bg_save,f)
+        pickle.dump(self.frame.bg_save,f)
         f.close()
 
         f = open(pat+"beeGrid_2nd.obj", "wb")
-        pickle.dump(self.hive.bg2_save,f)
+        pickle.dump(self.frame.bg2_save,f)
         f.close()
 
         f = open(pat+"T_field.obj", "wb")
-        pickle.dump(self.hive.tempField_save,f)
+        pickle.dump(self.frame.tempField_save,f)
         f.close()
 
         f = open(pat+"Tc.obj", "wb")
-        pickle.dump(self.hive.Tc,f)
+        pickle.dump(self.frame.Tc,f)
         f.close()
 
         f = open(pat+"Tmax.obj", "wb")
-        pickle.dump(self.hive.Tmax,f)
+        pickle.dump(self.frame.Tmax,f)
         f.close()
 
         f = open(pat+"meanT.obj", "wb")
-        pickle.dump(self.hive.meanT,f)
+        pickle.dump(self.frame.meanT,f)
         f.close()
 
         f = open(pat+"sigT.obj", "wb")
-        pickle.dump(self.hive.sigT,f)
+        pickle.dump(self.frame.sigT,f)
         f.close()
         return

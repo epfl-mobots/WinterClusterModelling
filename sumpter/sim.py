@@ -20,17 +20,17 @@ class Sim:
 
         #Create save directory for plots and data
         if hive_param["bee_param"]["alpha"]==0:
-            path = '../data/{}C/sump/'.format(hive_param["tempA"])
+            path = f'../data/{hive_param["tempA"]}C/sump/'
         else:
-            path = '../data/{}C/exp/'.format(hive_param["tempA"])
+            path = f'../data/{hive_param["tempA"]}C/exp/'
 
         todaystr = datetime.datetime.now().isoformat()
         todaystr = todaystr.replace(":","_")[0:19]
         self.savepath = path+todaystr+'/'
         self.savegraphpath = self.savepath+"graphics/"
         if not os.path.isdir(path+todaystr):
-            os.mkdir(path+todaystr)
-            os.mkdir(path+todaystr+"/graphics")
+            os.makedirs(path+todaystr)
+            os.makedirs(path+todaystr+"/graphics")
 
         # Save parameters as a txt file in the dir
         f = open(self.savepath+"parameters.txt", "a")
@@ -82,9 +82,9 @@ class Sim:
         pickle.dump(self.frame,f)
         f.close()
 
-"""
-Not used
-"""
+    """
+    Not used
+    """
     def save_old(self):
         pat = self.savepath+'/it_{}'.format(self.count)
         if not os.path.isdir(pat):

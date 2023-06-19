@@ -26,10 +26,10 @@ from tqdm import tqdm
 
 # hive_param = {
 #     "init_shape" : "random", #can also be "disc" or "ring"
-#     "dims_b" : (50,100),
+#     "dims_b" : (50,100), # Dimensions of the frame
 #     "n_bees" : 200,
-#     "tau" : 8,
-#     "g" : 2,
+#     "tau" : 8, # bee time step
+#     "g" : 2, # grid multiplication between temperature and bees
 #     "bee_param" : bee_param,
 #     "dims_temp" : (100,200), 
 #     "tempA" : 13, 

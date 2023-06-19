@@ -3,7 +3,7 @@
 import numpy as np
 import random
 import sys
-sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
+#sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
 from bee import Bee, FREE, STAT, MOV
 
 class Frame:
@@ -12,7 +12,6 @@ class Frame:
         param : parameters of the temperature field and agents
         hotspot : either False or parameters of the hotspot
         """
-        self.param = param
         self.tau = param["tau"]
         self.g = param["g"]
         self.dims_b = param["dims_b"]
@@ -23,7 +22,7 @@ class Frame:
 
         #temperature field initialization - initially homogenous at ambient temperature
         self.dims_temp = param["dims_temp"]
-        self.tempField = param['tempA']*np.ones(self.param['dims_temp'])
+        self.tempField = param['tempA']*np.ones(self.dims_temp)
 
         self.hot_on=False
         self.hotspot = hotspot
@@ -50,14 +49,14 @@ class Frame:
         #history of temperature field at every timestep
         self.tempField_save = [self.tempField]
 
-        self.beeTempField = param['tempA']*np.ones(self.param['dims_b'])
+        self.beeTempField = param['tempA']*np.ones(self.dims_b)
         self.Tmax = [param['tempA']]
-        self.Tc = [param['tempA']]
+        self.Tcs = [param['tempA']]
         self.Tmax_j = [0]
         self.meanT = [param['tempA']]
         self.sigT = [0]
 
-        #colony initialization
+        #colony initialisation
         self.n_bees = param["n_bees"]
         self.beeGrid = np.zeros(self.dims_b)
         bs = self.init_colony(param)
@@ -76,7 +75,7 @@ class Frame:
     def init_colony(self,param):
         """Build the list of agents (Bee objects) by random draw according to param."""
         bs = []
-        for i in range(param["n_bees"]):
+        for _ in range(param["n_bees"]):
             if param["init_shape"]=="disc": #initially in disc offset from corner
                 offset = (self.dims_b[0]//2,self.dims_b[1]//4)
                 r = 7*int(np.sqrt(param["n_bees"]//200))*random.random()
@@ -102,7 +101,7 @@ class Frame:
 
             else: #random initialization across grid
                 i_b = 1 + int(random.random()*(self.dims_b[0]-2))
-                j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
+                j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2) # Spawn bees only on left side
                 while self.beeGrid[i_b,j_b]!=FREE:
                     i_b = 1 + int(random.random()*(self.dims_b[0]-2))
                     j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
@@ -133,13 +132,13 @@ class Frame:
     def diff(self,i,j):
         """Compute the diffusion term in the temperature equation for position (i,j)."""
         d = 0
-        l = self.l_bee if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]==STAT)) else self.l_air
+        l = self.l_bee if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]==STAT)) else self.l_air # Change here
 
         for ip,jp in zip([i-1,i,i+1,i],[j,j-1,j,j+1]):
             lp = self.l_bee if ((ip%2==0) and (jp%2==0) and (self.beeGrid[ip//2,jp//2]==STAT)) else self.l_air
             d += l*lp*(self.tempField[ip,jp]-self.tempField[i,j])
 
-        return 0.25*d   
+        return d/4   
 
     def h(self,i,j):
         """Checks whether position (i,j) is within the boundaries of the hotspot."""
@@ -155,7 +154,7 @@ class Frame:
             for j in range(1,self.dims_temp[1]-1):
                 if self.hot_on and self.h(i,j):
                     continue
-                f_ij = f_mat[i,j] if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)) else 0
+                f_ij = f_mat[i,j] if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)) else 0 # Change here
                 self.tempField[i,j] += self.diff(i,j) + f_ij #+ self.f(i,j)
 
     def update(self,count):
@@ -174,7 +173,7 @@ class Frame:
         
         # update measurements of temp history
         self.Tmax.append(np.amax(self.tempField))
-        self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1])
+        self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1]) # Not sure what this is
         self.meanT.append(np.mean(self.tempField))
         self.sigT.append(np.std(self.tempField))
         
@@ -187,7 +186,7 @@ class Frame:
         
         #Saving state
         self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
-        self.Tc.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
+        self.Tcs.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
         self.tempField_save.append(self.tempField.copy())
         self.bg_save.append(self.beeGrid.copy())
         self.bg2_save.append(self.beeGrid_2nd.copy())

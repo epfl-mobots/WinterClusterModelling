@@ -99,11 +99,12 @@ class Bee:
         #STATE RE_EVALUATION
         if self.state=='sumpter':
             prob_alpha = self.prob_tr if self.prob_mode!='temp_dep' else self.update_prob(tempField[self.i,self.j])
-            #random draw with a probability prob_alpha to go into leave mode
-            leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
-            if leave and beeGrid_2nd[self.i,self.j]==FREE: #if the bee 'wants' to leave + no bee is passing on top
-                self.state = 'leave'
-                self.draw_direction()
+            if beeGrid_2nd[self.i,self.j]==FREE:
+                #random draw with a probability prob_alpha to go into leave mode
+                leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
+                if leave: #if the bee 'wants' to leave
+                    self.state = 'leave'
+                    self.draw_direction()
 
         elif self.state=='leave':
             #check if neighbouring spots are empty (if they are, leaving phase is over)

@@ -44,10 +44,10 @@ SUMPTER = False
 
 if EXPERIMENTS: #bunch of simulations
     iteration=1
-    dr = [1000]
+    dr = [15]
     alphas = [0.002]
     ambient_temperatures = [12]
-    ns_bees = [200]
+    ns_bees = [400]
 
     for T_amb in ambient_temperatures:
         for alpha in alphas:
@@ -80,11 +80,10 @@ if EXPERIMENTS: #bunch of simulations
                         "tau" : 8,
                         "g" : 2,
                         "bee_param" : bee_param,
-                        "dims_temp" : (100,200), 
                         "tempA" : T_amb,  
                         "lambda_air" : 1.0,
                         "lambda_bee" : 0.45,
-                        "hq20" : 0.037,
+                        "hq20" : 0.0037,
                         "gamma" : np.log(2.4)/10
                     }
 

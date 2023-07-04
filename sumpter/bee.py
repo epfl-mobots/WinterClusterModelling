@@ -129,86 +129,85 @@ class Bee:
         if tempField[self.i,self.j]<self.Tcoma:
             return
         
-        else:
-            if self.state == 'sumpter':
-                beeGrid[self.i,self.j]=FREE
+        if self.state == 'sumpter':
+            beeGrid[self.i,self.j]=FREE
 
-                xy_TI = [] # positions within reachable range that are within [TminI;TmaxI]
-                xy_free = [] # other positions within reachable range
-                temp_free = []
-                for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
-                    if jp<1 or jp>self.jmax or ip<1 or ip>self.imax:
-                        continue
-                    if beeGrid[ip,jp]==FREE:
-                        if tempField[ip,jp]<=self.TmaxI and tempField[ip,jp]>=self.TminI:
-                            xy_TI.append([ip,jp])
-                        else:
-                            xy_free.append([ip,jp])
-                            temp_free.append(abs(tempField[ip,jp]-0.5*(self.TmaxI+self.TminI)))
-
-                if xy_TI:
-                    if len(xy_TI)==1:
-                        self.i = xy_TI[0][0]
-                        self.j = xy_TI[0][1]
+            xy_TI = [] # positions within reachable range that are within [TminI;TmaxI]
+            xy_free = [] # other positions within reachable range
+            temp_free = []
+            for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
+                if jp<0 or jp>self.jmax or ip<0 or ip>self.imax:
+                    continue
+                if beeGrid[ip,jp]==FREE:
+                    if tempField[ip,jp]<=self.TmaxI and tempField[ip,jp]>=self.TminI:
+                        xy_TI.append([ip,jp])
                     else:
-                        idx = np.random.randint(0,len(xy_TI))
-                        self.i = xy_TI[idx][0]
-                        self.j = xy_TI[idx][1]
+                        xy_free.append([ip,jp])
+                        temp_free.append(abs(tempField[ip,jp]-0.5*(self.TmaxI+self.TminI)))
 
-                elif xy_free:
-                    if len(xy_free)==1:
-                        self.i = xy_free[0][0]
-                        self.j = xy_free[0][1]
-                    else:
-                        idxs = np.where(temp_free==min(temp_free))
-                        if len(idxs)==1:
-                            idx = idxs[0][0]
-                        else: 
-                            idx = idxs[np.random.randint(0,len(idxs))]
-                        if temp_free[idx]!=tempField[self.i,self.j]:
-                            self.i = xy_free[idx][0]
-                            self.j = xy_free[idx][1]
-                
-                # update beeGrid with the new position (and if bee is static or moved)
-                if self.i==init_pos[0] and self.j==init_pos[1]:
-                    beeGrid[self.i,self.j]=STAT
+            if xy_TI:
+                if len(xy_TI)==1:
+                    self.i = xy_TI[0][0]
+                    self.j = xy_TI[0][1]
                 else:
-                    beeGrid[self.i,self.j]=MOV
-        
-            elif self.state == 'leave':
-                if beeGrid_2nd[self.i,self.j]==FREE: #if the bee is not on the 2nd layer
-                    beeGrid[self.i,self.j]=FREE # move the bee "up" (free the spot on first layer)
-                else:
-                    beeGrid_2nd[self.i,self.j]=FREE
-                
-                self.move_toward_dir(beeGrid_2nd,init_pos)
-                
-                # update beeGrid_2nd with the new position (and if bee is static or moved)
-                if self.i==init_pos[0] and self.j==init_pos[1]:
-                    beeGrid_2nd[self.i,self.j]=STAT
-                else:
-                    beeGrid_2nd[self.i,self.j]=MOV
+                    idx = np.random.randint(0,len(xy_TI))
+                    self.i = xy_TI[idx][0]
+                    self.j = xy_TI[idx][1]
 
-            elif self.state=='explore':
-                beeGrid_2nd[self.i,self.j]=FREE
-                
-                # if hit a wall, draw a new direction on another wall
-                if self.i == self.imax:
-                    self.draw_direction(exclude='down')
-                if self.i == 0:
-                    self.draw_direction(exclude='up')
-                if self.j == self.jmax:
-                    self.draw_direction(exclude='right')
-                if self.j == 0:
-                    self.draw_direction(exclude='left')
-
-                self.move_toward_dir(beeGrid_2nd,init_pos)
-
-                # update beeGrid with the new position (and if bee is static or moved)
-                if self.i==init_pos[0] and self.j==init_pos[1]:
-                    beeGrid_2nd[self.i,self.j]=STAT
+            elif xy_free:
+                if len(xy_free)==1:
+                    self.i = xy_free[0][0]
+                    self.j = xy_free[0][1]
                 else:
-                    beeGrid_2nd[self.i,self.j]=MOV
+                    idxs = np.where(temp_free==min(temp_free))
+                    if len(idxs)==1:
+                        idx = idxs[0][0]
+                    else: 
+                        idx = idxs[np.random.randint(0,len(idxs))]
+                    if temp_free[idx]!=tempField[self.i,self.j]:
+                        self.i = xy_free[idx][0]
+                        self.j = xy_free[idx][1]
             
-                
+            # update beeGrid with the new position (and if bee is static or moved)
+            if self.i==init_pos[0] and self.j==init_pos[1]:
+                beeGrid[self.i,self.j]=STAT
+            else:
+                beeGrid[self.i,self.j]=MOV
+    
+        elif self.state == 'leave':
+            if beeGrid_2nd[self.i,self.j]==FREE: #if the bee is not on the 2nd layer
+                beeGrid[self.i,self.j]=FREE # move the bee "up" (free the spot on first layer)
+            else:
+                beeGrid_2nd[self.i,self.j]=FREE
+            
+            self.move_toward_dir(beeGrid_2nd,init_pos)
+            
+            # update beeGrid_2nd with the new position (and if bee is static or moved)
+            if self.i==init_pos[0] and self.j==init_pos[1]:
+                beeGrid_2nd[self.i,self.j]=STAT
+            else:
+                beeGrid_2nd[self.i,self.j]=MOV
+
+        elif self.state=='explore':
+            beeGrid_2nd[self.i,self.j]=FREE
+            
+            # if hit a wall, draw a new direction on another wall
+            if self.i == self.imax:
+                self.draw_direction(exclude='down')
+            if self.i == 0:
+                self.draw_direction(exclude='up')
+            if self.j == self.jmax:
+                self.draw_direction(exclude='right')
+            if self.j == 0:
+                self.draw_direction(exclude='left')
+
+            self.move_toward_dir(beeGrid_2nd,init_pos)
+
+            # update beeGrid with the new position (and if bee is static or moved)
+            if self.i==init_pos[0] and self.j==init_pos[1]:
+                beeGrid_2nd[self.i,self.j]=STAT
+            else:
+                beeGrid_2nd[self.i,self.j]=MOV
+        
+            
 

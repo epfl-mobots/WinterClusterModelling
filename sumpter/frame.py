@@ -2,16 +2,19 @@
 
 import numpy as np
 import random
-import sys
+#import sys
 #sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
 from bee import Bee, FREE, STAT, MOV
+import draw
+import datetime
 
 class Frame:
-    def __init__(self, param, hotspot):
+    def __init__(self, param, hotspot,graphpath):
         """Initialisation of Frame object
         param : parameters of the temperature field and agents
         hotspot : either False or parameters of the hotspot
         """
+        self.graphpath=graphpath
         self.tau = param["tau"]
         self.g = param["g"]
         self.dims_b = param["dims_b"]
@@ -21,12 +24,12 @@ class Frame:
         self.gamma = param["gamma"]
 
         #temperature field initialization - initially homogenous at ambient temperature
-        self.dims_temp = param["dims_temp"]
+        self.dims_temp = tuple(self.g*dim for dim in self.dims_b)
         self.tempField = param['tempA']*np.ones(self.dims_temp)
 
         self.hot_on=False
         self.hotspot = hotspot
-        if type(hotspot)!=bool:
+        if type(self.hotspot)!=bool:
             if hotspot['coord']!=[]:
                 #computing position of possible hotspots depending on the temperature field dimensions
                 self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
@@ -58,27 +61,26 @@ class Frame:
 
         #colony initialisation
         self.n_bees = param["n_bees"]
-        self.beeGrid = np.zeros(self.dims_b)
-        bs = self.init_colony(param)
-        self.colony = np.array(bs)
+        self.beeGrid = np.zeros(self.dims_b) # Grid of bees
+        self.colony = np.asarray(self.init_colony(param["n_bees"],param["init_shape"],param["bee_param"])) #List of bees
         self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
-        self.bg_save = [self.beeGrid.copy()]
+        self.bgs_save = [self.beeGrid.copy()]
 
         #2nd layer of beeGrid for bees in 'leave' state
         self.beeGrid_2nd = np.zeros(self.dims_b)
-        self.bg2_save = [self.beeGrid_2nd.copy()]
+        self.bgs2_save = [self.beeGrid_2nd.copy()]
 
         #initial stage where only the temperature dynamics are active (no agent movement)
         #self.init_temp()
 
 
-    def init_colony(self,param):
+    def init_colony(self,_n_bees,_init_shape,_bee_param):
         """Build the list of agents (Bee objects) by random draw according to param."""
         bs = []
-        for _ in range(param["n_bees"]):
-            if param["init_shape"]=="disc": #initially in disc offset from corner
+        for _ in range(_n_bees):
+            if _init_shape=="disc": #initially in disc offset from corner
                 offset = (self.dims_b[0]//2,self.dims_b[1]//4)
-                r = 7*int(np.sqrt(param["n_bees"]//200))*random.random()
+                r = 10*int(np.sqrt(_n_bees//100))*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
                 j_b = int(r*np.sin(theta))+offset[1]
@@ -88,7 +90,7 @@ class Frame:
                     i_b = int(r*np.cos(theta))+offset[0]
                     j_b = int(r*np.sin(theta))+offset[1]
 
-            elif param["init_shape"]=="ring": #initially in ring in middle
+            elif _init_shape=="ring": #initially in ring in middle
                 r = 7*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
@@ -99,15 +101,15 @@ class Frame:
                     i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
                     j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
 
-            else: #random initialization across grid
-                i_b = 1 + int(random.random()*(self.dims_b[0]-2))
-                j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2) # Spawn bees only on left side
+            else: #random initialisation across grid
+                i_b =int(random.random()*(self.dims_b[0]))
+                j_b =int(random.random()*(self.dims_b[1])/2) # Spawn bees only on left side
                 while self.beeGrid[i_b,j_b]!=FREE:
-                    i_b = 1 + int(random.random()*(self.dims_b[0]-2))
-                    j_b = 1 + int(random.random()*(self.dims_b[1]-2)//2)
+                    i_b = int(random.random()*(self.dims_b[0]))
+                    j_b = int(random.random()*(self.dims_b[1])/2)
             
             self.beeGrid[i_b,j_b] = STAT        
-            bs.append(Bee(i_b,j_b,param["bee_param"]))
+            bs.append(Bee(i_b,j_b,_bee_param))
         return bs
 
     def init_temp(self):
@@ -125,37 +127,50 @@ class Frame:
         """Compute the metabolic temperature contribution of the agent at position (i,j).
         Returns 0 if no agent is at this position.
         """
-        if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)):
-            return self.hq20*np.exp(self.gamma*(self.tempField[i,j]-20))
-        return 0
+        # if self.tempField[i,j] >35:
+        #     print(self.tempField[i,j])
+        f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
+        return f_ij
 
-    def diff(self,i,j):
-        """Compute the diffusion term in the temperature equation for position (i,j)."""
+    def diff(self,i,j,lamdas):
+        """Compute the diffusion term in the temperature equation for position (i,j).
+            Lij=La-Pij*(La-Lb) --> We first compute Pij
+        """
         d = 0
-        l = self.l_bee if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]==STAT)) else self.l_air # Change here
+        #l=self.l_air-Pij[i//2,j//2]*(self.l_air-self.l_bee)
+        #lamdas = self.l_bee if (self.beeGrid==STAT) else self.l_air
 
         for ip,jp in zip([i-1,i,i+1,i],[j,j-1,j,j+1]):
-            lp = self.l_bee if ((ip%2==0) and (jp%2==0) and (self.beeGrid[ip//2,jp//2]==STAT)) else self.l_air
-            d += l*lp*(self.tempField[ip,jp]-self.tempField[i,j])
+            #lp = self.l_bee if self.beeGrid[ip//2,jp//2]==STAT else self.l_air
+            d += lamdas[i//self.g,j//self.g]*lamdas[ip//self.g,jp//self.g]*(self.tempField[ip,jp]-self.tempField[i,j])
 
-        return d/4   
+        return d/4  
 
     def h(self,i,j):
         """Checks whether position (i,j) is within the boundaries of the hotspot."""
         for n in range(self.n_spot):
             if i>self.hotspot_i[n][0] and i<self.hotspot_i[n][1] and j>self.hotspot_j[n][0] and j<self.hotspot_j[n][1]:
-                return True
-        return False
+                return n
+        return -1
 
-    def update_temp(self):
+    def update_temp(self,lamdas):
         """Update the temperature field."""
-        f_mat = self.hq20*np.exp(self.gamma*(self.tempField-20))
-        for i in range(1,self.dims_temp[0]-1):
+        for i in range(1,self.dims_temp[0]-1): # Exclude borders because initial condition
             for j in range(1,self.dims_temp[1]-1):
-                if self.hot_on and self.h(i,j):
-                    continue
-                f_ij = f_mat[i,j] if ((i%2==0) and (j%2==0) and (self.beeGrid[i//2,j//2]!=FREE)) else 0 # Change here
-                self.tempField[i,j] += self.diff(i,j) + f_ij #+ self.f(i,j)
+                if self.hot_on:
+                    hotspot= self.h(i,j)
+                    if hotspot!=-1:
+                        j=self.hotspot_j[hotspot][1]-1 #Skips all other pixels on the hotspot
+                        continue
+                diffusion_term= self.diff(i,j,lamdas)
+                heating = self.f(i,j)
+                self.tempField[i,j] += diffusion_term + heating
+
+                if self.tempField[i,j]>100 or self.tempField[i,j]<-100 : 
+                    print(f"heating = {heating}")
+                    print(f"diffusion = {diffusion_term}")
+                    draw.update(self,self.graphpath,599)
+                    exit()
 
     def update(self,count):
         """Update the Frame state. Called at each timestep.
@@ -168,8 +183,10 @@ class Frame:
             self.hot_on = False
 
         # tau temperature updates for each bee update
+        Pij=(self.beeGrid)%2
+        lamdas=self.l_air-Pij*(self.l_air-self.l_bee)
         for _ in range(self.tau):
-            self.update_temp()
+            self.update_temp(lamdas)
         
         # update measurements of temp history
         self.Tmax.append(np.amax(self.tempField))
@@ -188,18 +205,13 @@ class Frame:
         self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         self.Tcs.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
         self.tempField_save.append(self.tempField.copy())
-        self.bg_save.append(self.beeGrid.copy())
-        self.bg2_save.append(self.beeGrid_2nd.copy())
+        self.bgs_save.append(self.beeGrid.copy())
+        self.bgs2_save.append(self.beeGrid_2nd.copy())
         
     
     def compute_Tbee(self):
         """Compute local average of temperature at each possible agent position."""
-        for x in range(1,self.dims_b[0]):
-            for y in range(1,self.dims_b[1]):
-                x_st = int(self.g*(x-0.5))
-                x_e = int(self.g*(x+1-0.5))
-                y_st = int(self.g*(y-0.5))
-                y_e = int(self.g*(y+1-0.5))
-                self.beeTempField[x,y] = sum(sum(self.tempField[x_st:x_e,y_st:y_e]))/(self.g**2)
-    
-    
+        #   From https://stackoverflow.com/questions/26871083/how-can-i-vectorize-the-averaging-of-2x2-sub-arrays-of-numpy-array :
+        #   Using the reshape method for faster computation
+        beeTempField = self.tempField.reshape(np.shape(self.tempField)[0]//2, 2, np.shape(self.tempField)[1]//2, 2)
+        self.beeTempField = beeTempField.mean(axis=(1,3))

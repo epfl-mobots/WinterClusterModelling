@@ -1,7 +1,5 @@
 """Definition of Sim class handling the saving and calling graphics generation"""
 import os, datetime
-import numpy as np
-import matplotlib.pyplot as plt
 import pickle
 
 from frame import Frame
@@ -28,6 +26,7 @@ class Sim:
         todaystr = todaystr.replace(":","_")[0:19]
         self.savepath = path+todaystr+'/'
         self.savegraphpath = self.savepath+"graphics/"
+
         if not os.path.isdir(path+todaystr):
             os.makedirs(path+todaystr)
             os.makedirs(path+todaystr+"/graphics")
@@ -44,7 +43,7 @@ class Sim:
         # Find parameters for frame, either from scratch or from save
         if load_saved is False:
             #initialize frame and graphic
-            self.frame = Frame(hive_param,hotspot)
+            self.frame = Frame(hive_param,hotspot,self.savegraphpath)
         else:
             f = open(load_saved+"/frame.obj", "rb")
             self.frame = pickle.load(f)

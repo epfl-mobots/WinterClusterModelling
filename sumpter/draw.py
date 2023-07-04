@@ -8,7 +8,7 @@ import gc
 from bee import FREE, STAT, MOV
 
 T_MIN_DRAW = 5
-T_MAX_DRAW = 25
+T_MAX_DRAW = 35
 SIZE_BEE = 1
 
 colors=[]
@@ -18,7 +18,7 @@ for i in range(5):
     colors.append(col)
 cmap_temp = LinearSegmentedColormap.from_list("mycmap", colors)
 
-def update(frame,path,count=0):
+def update(frame,path,count=None):
     """Draw the simulation state described by frame and save image in path"""
     #plotting temperatures as background
     plt.matshow(frame.tempField,fignum=count,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
@@ -44,8 +44,10 @@ def update(frame,path,count=0):
     #remove axes ticks
     plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False,labeltop=False)
     plt.tick_params(axis='y', which='both', right=False, left=False, labelleft=False)
-    plt.savefig(path+'iteration_{}.png'.format(count))
-
+    if count is not None:
+        plt.savefig(path+'iteration_{}.png'.format(count))
+    else:
+        plt.savefig(path+'iteration_{}.png'.format(0))
     #Close figure, clear everything
     plt.cla() 
     plt.clf() 

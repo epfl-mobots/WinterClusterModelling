@@ -1,13 +1,15 @@
 """Definition of Sim class handling the saving and calling graphics generation"""
 import os, datetime
 import pickle
+from configparser import ConfigParser
+import shutil
 
 from frame import Frame
 import draw
 
 
 class Sim:
-    def __init__(self,hive_param,draw_on=True,hotspot=False,draw_t=10, load_saved=False):
+    def __init__(self,cfg_path=None,draw_on=True,draw_t=10, load_saved=False):
         """Initialisation of the simulation
         frame_param : parameters of the frame
         draw_on : boolean value for graphics generation (no graphics if False)
@@ -15,35 +17,31 @@ class Sim:
         draw_t : graphics refresh rate (in number of simulation timesteps)
         load_saved : False or path of Frame object to load from
         """
-
-        #Create save directory for plots and data
-        if hive_param["bee_param"]["alpha"]==0:
-            path = f'../data/{hive_param["tempA"]}C/sump/'
-        else:
-            path = f'../data/{hive_param["tempA"]}C/exp/'
-
-        todaystr = datetime.datetime.now().isoformat()
-        todaystr = todaystr.replace(":","_")[0:19]
-        self.savepath = path+todaystr+'/'
-        self.savegraphpath = self.savepath+"graphics/"
-
-        if not os.path.isdir(path+todaystr):
-            os.makedirs(path+todaystr)
-            os.makedirs(path+todaystr+"/graphics")
-
-        # Save parameters as a txt file in the dir
-        f = open(self.savepath+"parameters.txt", "a")
-        for k, v in hive_param.items():
-            f.write(str(k) + ' : '+ str(v) + '\n\n')
-            
-        for k, v in hotspot.items():
-            f.write(str(k) + ' : '+ str(v) + '\n\n')
-        f.close()
-
-        # Find parameters for frame, either from scratch or from save
         if load_saved is False:
-            #initialize frame and graphic
-            self.frame = Frame(hive_param,hotspot,self.savegraphpath)
+            cfg = ConfigParser()
+            cfg.read(cfg_path)
+
+            #Create save directory for plots and data
+            t_amb=cfg.getfloat('hive','t_amb')
+            if cfg.get('bee','alpha') == '' or cfg.getfloat('bee','alpha')== 0.0:
+                path = f'../data/{t_amb}C/sump/'
+            else:
+                path = f'../data/{t_amb}C/exp/'
+
+            todaystr = datetime.datetime.now().isoformat()
+            todaystr = todaystr.replace(":","_")[0:19]
+            self.savepath = path+todaystr+'/'
+            self.savegraphpath = self.savepath+"graphics/"
+
+            if not os.path.isdir(path+todaystr):
+                os.makedirs(path+todaystr)
+                os.makedirs(path+todaystr+"/graphics")
+
+            # Save parameters as a cfg file in the dir
+            shutil.copyfile(cfg_path, self.savepath+"config_copy")
+
+            self.frame = Frame(cfg_path,self.savegraphpath)
+
         else:
             f = open(load_saved+"/frame.obj", "rb")
             self.frame = pickle.load(f)

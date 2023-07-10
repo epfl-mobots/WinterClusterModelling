@@ -5,64 +5,75 @@ import random
 #import sys
 #sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
 from bee import Bee, FREE, STAT, MOV
-import draw
-import datetime
+from configparser import ConfigParser
+import ast
 
 class Frame:
-    def __init__(self, param, hotspot,graphpath):
+    def __init__(self, cfg_path,graphpath):
         """Initialisation of Frame object
-        param : parameters of the temperature field and agents
-        hotspot : either False or parameters of the hotspot
+        cfg_path : path the the config file
+        graphpath : path to where to store data for this exp
         """
+        cfg = ConfigParser()
+        cfg.read(cfg_path)
+
+        #Store basic parameters:
         self.graphpath=graphpath
-        self.tau = param["tau"]
-        self.g = param["g"]
-        self.dims_b = param["dims_b"]
-        self.l_bee = param["lambda_bee"]
-        self.l_air = param["lambda_air"]
-        self.hq20 = param["hq20"]
-        self.gamma = param["gamma"]
+        self.tau = cfg.getint('hive','tau')
+        self.g = cfg.getint('hive','g')
+        self.dims_b = ast.literal_eval(cfg.get('hive','dims_b'))
+        self.l_bee = cfg.getfloat('hive','lambda_bee')
+        self.l_air = cfg.getfloat('hive','lambda_air')
+        self.hq20 = cfg.getfloat('hive','hq20')
+        self.gamma = cfg.getfloat('hive','gamma')
+        self.t_amb = cfg.getfloat('hive','t_amb')
 
-        #temperature field initialization - initially homogenous at ambient temperature
+        #temperature field initialisation - initially homogenous at ambient temperature
         self.dims_temp = tuple(self.g*dim for dim in self.dims_b)
-        self.tempField = param['tempA']*np.ones(self.dims_temp)
+        self.tempField = self.t_amb*np.ones(self.dims_temp)
 
-        self.hot_on=False
-        self.hotspot = hotspot
-        if type(self.hotspot)!=bool:
-            if hotspot['coord']!=[]:
-                #computing position of possible hotspots depending on the temperature field dimensions
+        # Hotspot initialisation
+        if cfg.getboolean('hotspot','used'):
+            self.hot_used=True
+            self.hot_on=False
+            self.hotspot = cfg['hotspot']
+            if cfg.get('hotspot','coord') != '':
+                #computing positions of all physical hotspots depending on the temperature field dimensions
                 self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
                 self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
                 self.sz_spot = int(0.34*self.dims_temp[0])
 
                 #setting position of hotspot
-                self.n_spot = len(hotspot['coord'])
-                self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in hotspot['coord']]#(self.i_hot[param["i_hotspot"]],self.j_hot[param["j_hotspot"]])
-                self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in hotspot['coord']]
+                coords=ast.literal_eval(cfg.get('hotspot','coord'))
+                self.n_spot = len(coords)
+                self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in coords]
+                self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
             else:
                 self.n_spot = 1
-                self.hotspot_i = [[int((hotspot['i_c']-hotspot['sz']/2)*self.dims_temp[0]),int((hotspot['i_c']+hotspot['sz']/2)*self.dims_temp[0])]]
-                self.hotspot_j = [[int((hotspot['j_c']-hotspot['sz']/4)*self.dims_temp[1]),int((hotspot['j_c']+hotspot['sz']/4)*self.dims_temp[1])]]
+                self.hotspot_i = [[int((cfg.getfloat('hotspot','i_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','i_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
+                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
 
-            self.Tspot = hotspot['Tspot']
-            if hotspot['on']==0:
-                self.set_hotspot()
+                self.Tspot = cfg.getfloat('hotspot','Tspot')
+                if cfg.getint('hotspot','on')==0:
+                    self.set_hotspot()
+        else:
+            self.hot_used=False
+            self.hot_on=False
 
         #history of temperature field at every timestep
         self.tempField_save = [self.tempField]
 
-        self.beeTempField = param['tempA']*np.ones(self.dims_b)
-        self.Tmax = [param['tempA']]
-        self.Tcs = [param['tempA']]
+        self.beeTempField = self.t_amb*np.ones(self.dims_b)
+        self.Tmax = [self.t_amb]
+        self.Tcs = [self.t_amb]
         self.Tmax_j = [0]
-        self.meanT = [param['tempA']]
+        self.meanT = [self.t_amb]
         self.sigT = [0]
 
         #colony initialisation
-        self.n_bees = param["n_bees"]
+        self.n_bees = cfg.getint('hive','n_bees')
         self.beeGrid = np.zeros(self.dims_b) # Grid of bees
-        self.colony = np.asarray(self.init_colony(param["n_bees"],param["init_shape"],param["bee_param"])) #List of bees
+        self.colony = np.asarray(self.init_colony(self.n_bees,cfg.get('hive','init_shape'),cfg['bee'])) #List of bees
         self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         self.bgs_save = [self.beeGrid.copy()]
 
@@ -80,12 +91,12 @@ class Frame:
         for _ in range(_n_bees):
             if _init_shape=="disc": #initially in disc offset from corner
                 offset = (self.dims_b[0]//2,self.dims_b[1]//4)
-                r = 10*int(np.sqrt(_n_bees//100))*random.random()
+                r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
                 j_b = int(r*np.sin(theta))+offset[1]
                 while self.beeGrid[i_b,j_b]!=FREE:
-                    r = 10*random.random()
+                    r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                     theta = 2*np.pi*random.random()
                     i_b = int(r*np.cos(theta))+offset[0]
                     j_b = int(r*np.sin(theta))+offset[1]
@@ -127,8 +138,6 @@ class Frame:
         """Compute the metabolic temperature contribution of the agent at position (i,j).
         Returns 0 if no agent is at this position.
         """
-        # if self.tempField[i,j] >35:
-        #     print(self.tempField[i,j])
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
         return f_ij
 
@@ -165,12 +174,6 @@ class Frame:
                 diffusion_term= self.diff(i,j,lamdas)
                 heating = self.f(i,j)
                 self.tempField[i,j] += diffusion_term + heating
-
-                if self.tempField[i,j]>100 or self.tempField[i,j]<-100 : 
-                    print(f"heating = {heating}")
-                    print(f"diffusion = {diffusion_term}")
-                    draw.update(self,self.graphpath,599)
-                    exit()
 
     def update(self,count):
         """Update the Frame state. Called at each timestep.

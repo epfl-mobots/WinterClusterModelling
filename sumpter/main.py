@@ -2,6 +2,9 @@
 from sim import Sim
 import numpy as np
 from tqdm import tqdm
+from argparse import ArgumentParser
+import os
+import configparser
 
 #Parameter description with default values
 # bee_param = {
@@ -39,127 +42,56 @@ from tqdm import tqdm
 #     "gamma" : np.log(2.4)/10
 # }
 
-EXPERIMENTS = True
-SUMPTER = False
+def script_parser():
+    ''' construct argparse object to interpret the incoming command '''
+    parser = ArgumentParser(exit_on_error=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-c', '--cfg')
+    group.add_argument('-f', '--frame')
+    return parser
 
-if EXPERIMENTS: #bunch of simulations
-    iteration=1
-    dr = [15]
-    alphas = [0.002]
-    ambient_temperatures = [12]
-    ns_bees = [400]
+def verify_cfg_file(cfg_path): 
+    ''' Check if config file exists '''
+    if not os.path.isfile(cfg_path):
+        raise FileNotFoundError(f"No config file found at '{args.cfg}'") 
+    abs_path=os.path.realpath(cfg_path)
+    cfg = configparser.ConfigParser()
+    cfg.read(abs_path)  # abs_path is a canonical path
+    if len(cfg.sections())!=3:
+        raise configparser.ParsingError(f"Invalid number of sections: {cfg.sections()}")
+    if 'bee' not in cfg or 'hive' not in cfg or 'hotspot' not in cfg:
+        raise configparser.ParsingError(f"Could not find the expected sections: bee, hive, hotspot")
+    if len(cfg.options("bee"))!=8 or len(cfg.options("hotspot")) !=8 or len(cfg.options("hive")) != 10:
+        raise configparser.ParsingError(f"Invalid number of options per section")
+    if cfg['hive']['n_bees'] is None:
+        raise configparser.ParsingError(f"No number of bees specified")
+    
+    return abs_path
 
-    for T_amb in ambient_temperatures:
-        for alpha in alphas:
-            for refresh_rate in dr:
-                for n_bees in ns_bees:
-                    bee_param = {
-                        "Tcoma" : 8,
-                        "TminI" : 18,
-                        "TmaxI" : 23,
-                        "xmax"  : 49,
-                        "ymax"  : 99,
-                        "prob_mode" : 'temp_dep',
-                        "alpha" : alpha
-                    }
+if __name__ == "__main__":
+    parser=script_parser()
+    args = parser.parse_args()
+    
+    if args.cfg is not None:
+        #We upload a configuration and start from scratch
+        #Verify cfg file:
+        abs_path=verify_cfg_file(str(args.cfg))
+        refresh_rate=15
+        sim = Sim(cfg_path=abs_path,draw_on=True,draw_t=refresh_rate,load_saved=False) #the simulation is redrawn every DRAW_T steps
 
-                    hotspot = {
-                        "j_c" : 4/5,
-                        "i_c" : 1/2,
-                        "sz" : 1/4,
-                        "coord" : [],
-                        "Tspot" : 20.5, 
-                        "on" : 0, 
-                        "off" : 100000
-                    }
+        if sim.frame.t_amb==13:
+            SIM_TIME = 10000    #in bee timesteps
+        if sim.frame.t_amb<13:
+            SIM_TIME = 40000    #in bee timesteps
 
-                    hive_param = {
-                        "init_shape" : "disc",
-                        "dims_b" : (50,100),
-                        "n_bees" : n_bees,
-                        "tau" : 8,
-                        "g" : 2,
-                        "bee_param" : bee_param,
-                        "tempA" : T_amb,  
-                        "lambda_air" : 1.0,
-                        "lambda_bee" : 0.45,
-                        "hq20" : 0.0037,
-                        "gamma" : np.log(2.4)/10
-                    }
-
-                    if T_amb==13:
-                        SIM_TIME = 10000 #in bee timesteps
-                    if T_amb<13:
-                        SIM_TIME = 40000 #in bee timesteps
-
-                    sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=refresh_rate) #the simulation is redrawn every DRAW_T steps
-                    for i in tqdm(range(SIM_TIME)):
-                        sim.update()
-                        if i%10000==0:
-                            sim.save()
-
-                    sim.end()
-                    print(f"Simulation {iteration}/{len(alphas)*len(dr)*len(ambient_temperatures)*len(ns_bees)} finished.")
-                    iteration=iteration+1
-
-
-if SUMPTER : #bunch of simulations
-    iteration=1
-    dr = [1000]
-    ns_bees = [200]
-    alphas = [0.001]
-    ambient_temperatures = [11,13,12,10]
-
-    for T_amb in ambient_temperatures:
-        for alpha in alphas:
-            for refresh_rate in dr:
-                for n_bees in ns_bees:
-                    bee_param = {
-                        "Tcoma" : 8,
-                        "TminI" : 18,
-                        "TmaxI" : 23,
-                        "xmax"  : 49,
-                        "ymax"  : 99,
-                        "prob_mode" : 'temp_dep',
-                        "alpha" : 0
-                    }
-
-                    hotspot = {
-                        "j_c" : 4/5,
-                        "i_c" : 1/2,
-                        "sz" : 1/4,
-                        "coord" : [],
-                        "Tspot" : 20.5, 
-                        "on" : 10000, 
-                        "off" : 100000
-                    }
-
-                    hive_param = {
-                        "init_shape" : "random",
-                        "dims_b" : (50,100),
-                        "n_bees" : 200,
-                        "tau" : 8,
-                        "g" : 2,
-                        "bee_param" : bee_param,
-                        "dims_temp" : (100,200), 
-                        "tempA" : T_amb, 
-                        "lambda_air" : 1.0,
-                        "lambda_bee" : 0.45,
-                        "hq20" : 0.037,
-                        "gamma" : np.log(2.4)/10
-                    }
-
-                    if T_amb>=11:
-                        SIM_TIME = 20000 #in bee timesteps
-                    if T_amb<13:
-                        SIM_TIME = 20000 #in bee timesteps
-
-                    sim = Sim(hive_param,draw_on=True,hotspot=hotspot,draw_t=refresh_rate) #the simulation is redrawn every DRAW_T steps
-                    for i in tqdm(range(SIM_TIME)):
-                        sim.update()
-                        if i%10000==0:
-                            sim.save()
-
-                    sim.end()
-                    print(f"Simulation {iteration}/{len(alphas)*len(dr)*len(ambient_temperatures)*len(ns_bees)} finished.")
-                    iteration=iteration+1
+        print("Starting simulation.")
+        for i in tqdm(range(SIM_TIME)):
+            sim.update()
+            if i%10000==0:
+                sim.save()
+            
+        sim.end()
+        print(f"Simulation finished.")
+    else:
+        #We want to start from a checkpoint
+        temp=2

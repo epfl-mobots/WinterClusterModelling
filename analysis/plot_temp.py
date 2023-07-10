@@ -117,7 +117,6 @@ def plot_combined(srcDir):
     temp_field = np.array(pickle.load(f))
     f.close()
 
-    #print(len(temp_field), len(temp_field[0]),len(temp_field[0][0]))
     if not os.path.isdir(srcDir+"/analysis/combined"):
         os.mkdir(srcDir+"/analysis/combined")
     outDir = srcDir+"/analysis/combined"
@@ -183,7 +182,6 @@ def plot_combined_hive(srcDir):
     temp_field = np.array(hi.tempField_save)
     
 
-    #print(len(temp_field), len(temp_field[0]),len(temp_field[0][0]))
     if not os.path.isdir(srcDir+"/analysis/combined"):
         os.mkdir(srcDir+"/analysis/combined")
     outDir = srcDir+"/analysis/combined"

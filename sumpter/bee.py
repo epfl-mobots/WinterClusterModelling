@@ -20,13 +20,13 @@ class Bee:
         y : j coordinate
         param : agent characteristics (described in main.py)
         """
-        self.TminI = param["TminI"]
-        self.TmaxI = param["TmaxI"]
-        self.Tcoma = param["Tcoma"]
+        self.TminI = float(param["TminI"])
+        self.TmaxI = float(param["TmaxI"])
+        self.Tcoma = float(param["Tcoma"])
 
         #limits of the terrain
-        self.imax = param['xmax']
-        self.jmax = param['ymax']
+        self.imax = int(param['xmax'])
+        self.jmax = int(param['ymax'])
 
         #position
         self.i = x
@@ -35,10 +35,13 @@ class Bee:
 
         #states (sumpter - leave - explore)
         self.state = 'sumpter'
-        self.prob_mode = param['prob_mode']
-        self.prob_tr = param['alpha']
-        self.direction = np.array([0,0])
-        self.bounced = 0
+        self.exp_mode = param['mode'] # Defines wether we use additionnal behavioural rules in the experiment
+        
+        if self.exp_mode != 'sumpter_exp':
+            self.prob_mode = param['prob_mode']
+            self.prob_tr = float(param['alpha'])
+            self.direction = np.array([0,0])
+            self.bounced = 0
     
 
     def draw_direction(self, exclude='none'):
@@ -88,47 +91,46 @@ class Bee:
     def update_prob(self, temp):
         """Compute the probability of an agent to go from 'sumpter' to 'leave' mode based on temp."""
         if self.prob_mode == 'temp_dep':
-            # print(temp)
-            # print(self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI))))
             return self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
 
     def update(self,tempField,beeGrid,beeGrid_2nd):
         """Update of the agent state and position."""
-        init_pos = np.array([self.i,self.j])
-
-        #STATE RE_EVALUATION
-        if self.state=='sumpter':
-            prob_alpha = self.prob_tr if self.prob_mode!='temp_dep' else self.update_prob(tempField[self.i,self.j])
-            if beeGrid_2nd[self.i,self.j]==FREE:
-                #random draw with a probability prob_alpha to go into leave mode
-                leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
-                if leave: #if the bee 'wants' to leave
-                    self.state = 'leave'
-                    self.draw_direction()
-
-        elif self.state=='leave':
-            #check if neighbouring spots are empty (if they are, leaving phase is over)
-            nb_empty=0
-            for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
-                if jp<1 or jp>self.jmax or ip<1 or ip>self.imax:
-                    continue
-                if beeGrid[ip,jp]==FREE:
-                    nb_empty+=1
-            if nb_empty==5: #if the spot the bee is in + neighbours are free in 1st layer of bees
-                self.state='explore'
-
-        elif self.state=='explore':
-            #go back to sumpter if local temp is comfy or if bounced twice
-            if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=MAX_BOUNCE:
-                beeGrid[self.i,self.j]=MOV # move the bee "down"
-                beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
-                self.state='sumpter'
-                self.bounced = 0
-
-        ## ACTIONS according to state
         if tempField[self.i,self.j]<self.Tcoma:
             return
         
+        init_pos = np.array([self.i,self.j])
+
+        if self.exp_mode != 'sumpter_exp':
+            #Perform potential state switching
+            if self.state=='sumpter':
+                prob_alpha = self.prob_tr if self.prob_mode!='temp_dep' else self.update_prob(tempField[self.i,self.j])
+                if beeGrid_2nd[self.i,self.j]==FREE:
+                    #random draw with a probability prob_alpha to go into leave mode
+                    leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
+                    if leave: #if the bee 'wants' to leave
+                        self.state = 'leave'
+                        self.draw_direction()
+
+            elif self.state=='leave':
+                #check if neighbouring spots are empty (if they are, leaving phase is over)
+                nb_empty=0
+                for ip,jp in zip([self.i-1,self.i,self.i+1,self.i,self.i],[self.j,self.j-1,self.j,self.j+1,self.j]):
+                    if jp<1 or jp>self.jmax or ip<1 or ip>self.imax:
+                        continue
+                    if beeGrid[ip,jp]==FREE:
+                        nb_empty+=1
+                if nb_empty==5: #if the spot the bee is in + neighbours are free in 1st layer of bees
+                    self.state='explore'
+
+            elif self.state=='explore':
+                #go back to sumpter if local temp is comfy or if bounced twice
+                if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=MAX_BOUNCE:
+                    beeGrid[self.i,self.j]=MOV # move the bee "down"
+                    beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
+                    self.state='sumpter'
+                    self.bounced = 0
+
+        ## ACTIONS according to state
         if self.state == 'sumpter':
             beeGrid[self.i,self.j]=FREE
 

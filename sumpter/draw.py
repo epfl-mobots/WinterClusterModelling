@@ -7,7 +7,7 @@ import numpy as np
 import gc
 from bee import FREE, STAT, MOV
 
-T_MIN_DRAW = 5
+T_MIN_DRAW = 10
 T_MAX_DRAW = 35
 SIZE_BEE = 1
 

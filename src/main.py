@@ -45,7 +45,7 @@ import configparser
 def script_parser():
     ''' construct argparse object to interpret the incoming command '''
     parser = ArgumentParser(exit_on_error=True)
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_argument_group(required=True)
     group.add_argument('-c', '--cfg')
     group.add_argument('-f', '--frame')
     return parser
@@ -57,9 +57,9 @@ def verify_cfg_file(cfg_path):
     abs_path=os.path.realpath(cfg_path)
     cfg = configparser.ConfigParser()
     cfg.read(abs_path)  # abs_path is a canonical path
-    if len(cfg.sections())!=3:
+    if len(cfg.sections())!=4:
         raise configparser.ParsingError(f"Invalid number of sections: {cfg.sections()}")
-    if 'bee' not in cfg or 'hive' not in cfg or 'hotspot' not in cfg:
+    if 'bee' not in cfg or 'hive' not in cfg or 'hotspot' not in cfg or 'simu' not in cfg:
         raise configparser.ParsingError(f"Could not find the expected sections: bee, hive, hotspot")
     if len(cfg.options("bee"))!=8 or len(cfg.options("hotspot")) !=8 or len(cfg.options("hive")) != 10:
         raise configparser.ParsingError(f"Invalid number of options per section")
@@ -71,27 +71,20 @@ def verify_cfg_file(cfg_path):
 if __name__ == "__main__":
     parser=script_parser()
     args = parser.parse_args()
-    
+    abs_cfg_path=None
+
     if args.cfg is not None:
-        #We upload a configuration and start from scratch
-        #Verify cfg file:
-        abs_path=verify_cfg_file(str(args.cfg))
-        refresh_rate=15
-        sim = Sim(cfg_path=abs_path,draw_on=True,draw_t=refresh_rate,load_saved=False) #the simulation is redrawn every DRAW_T steps
+        abs_cfg_path=verify_cfg_file(str(args.cfg))
 
-        if sim.frame.t_amb==13:
-            SIM_TIME = 10000    #in bee timesteps
-        if sim.frame.t_amb<13:
-            SIM_TIME = 40000    #in bee timesteps
+    sim = Sim(cfg_path=abs_cfg_path, frame_save=args.frame)
+    
+    SIM_STEPS=sim.simu_steps
 
-        print("Starting simulation.")
-        for i in tqdm(range(SIM_TIME)):
-            sim.update()
-            if i%10000==0:
-                sim.save()
-            
-        sim.end()
-        print(f"Simulation finished.")
-    else:
-        #We want to start from a checkpoint
-        temp=2
+    print("Starting simulation.")
+    for i in tqdm(range(SIM_STEPS)):
+        sim.update()
+        if i%10000==0:
+            sim.save()
+        
+    sim.end()
+    print(f"Simulation finished.")

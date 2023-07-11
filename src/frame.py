@@ -9,16 +9,15 @@ from configparser import ConfigParser
 import ast
 
 class Frame:
-    def __init__(self, cfg_path,graphpath):
+    def __init__(self, cfg_path):
         """Initialisation of Frame object
-        cfg_path : path the the config file
-        graphpath : path to where to store data for this exp
+        cfg_path : canonical path to the config file
+        graphpath : path to somewhere to store data for this exp
         """
         cfg = ConfigParser()
         cfg.read(cfg_path)
 
         #Store basic parameters:
-        self.graphpath=graphpath
         self.tau = cfg.getint('hive','tau')
         self.g = cfg.getint('hive','g')
         self.dims_b = ast.literal_eval(cfg.get('hive','dims_b'))
@@ -36,7 +35,8 @@ class Frame:
         if cfg.getboolean('hotspot','used'):
             self.hot_used=True
             self.hot_on=False
-            self.hotspot = cfg['hotspot']
+            self.hotspot_on=cfg.getint('hotspot','on')
+            self.hotspot_off=cfg.getint('hotspot','off')
             if cfg.get('hotspot','coord') != '':
                 #computing positions of all physical hotspots depending on the temperature field dimensions
                 self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
@@ -54,7 +54,7 @@ class Frame:
                 self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
 
                 self.Tspot = cfg.getfloat('hotspot','Tspot')
-                if cfg.getint('hotspot','on')==0:
+                if self.hotspot_on==0:
                     self.set_hotspot()
         else:
             self.hot_used=False
@@ -122,6 +122,50 @@ class Frame:
             self.beeGrid[i_b,j_b] = STAT        
             bs.append(Bee(i_b,j_b,_bee_param))
         return bs
+    
+    def reset_params(self, cfg_path):
+        '''Resets the parameters of the frame to the ones provided in the cfg file
+        - cfg_path : canonical path to the new config file '''
+        cfg = ConfigParser()
+        cfg.read(cfg_path)
+
+        #Store basic parameters:
+        self.tau = cfg.getint('hive','tau')
+        self.g = cfg.getint('hive','g')
+        self.dims_b = ast.literal_eval(cfg.get('hive','dims_b'))
+        self.l_bee = cfg.getfloat('hive','lambda_bee')
+        self.l_air = cfg.getfloat('hive','lambda_air')
+        self.hq20 = cfg.getfloat('hive','hq20')
+        self.gamma = cfg.getfloat('hive','gamma')
+        self.t_amb = cfg.getfloat('hive','t_amb')
+
+        if cfg.getboolean('hotspot','used'):
+            self.hot_used=True
+            self.hot_on=False
+            self.hotspot_on=cfg.getint('hotspot','on')
+            self.hotspot_off=cfg.getint('hotspot','off')
+            if cfg.get('hotspot','coord') != '':
+                #computing positions of all physical hotspots depending on the temperature field dimensions
+                self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
+                self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
+                self.sz_spot = int(0.34*self.dims_temp[0])
+
+                #setting position of hotspot
+                coords=ast.literal_eval(cfg.get('hotspot','coord'))
+                self.n_spot = len(coords)
+                self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in coords]
+                self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
+            else:
+                self.n_spot = 1
+                self.hotspot_i = [[int((cfg.getfloat('hotspot','i_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','i_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
+                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
+
+                self.Tspot = cfg.getfloat('hotspot','Tspot')
+                if self.hotspot_on==0:
+                    self.set_hotspot()
+        else:
+            self.hot_used=False
+            self.hot_on=False
 
     def init_temp(self):
         """Update the temperature field only (no agent movement)"""
@@ -180,9 +224,9 @@ class Frame:
         - count is the iteration number
         """
 
-        if self.hotspot['on']==count:
+        if self.hotspot_on==count:
             self.set_hotspot()
-        elif self.hot_on and self.hotspot['off']==count:
+        elif self.hot_on and self.hotspot_off==count:
             self.hot_on = False
 
         # tau temperature updates for each bee update

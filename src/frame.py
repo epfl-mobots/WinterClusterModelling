@@ -4,9 +4,11 @@ import numpy as np
 import random
 #import sys
 #sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
-from bee import Bee, FREE, STAT, MOV
 from configparser import ConfigParser
 import ast
+
+from bee import Bee, FREE, STAT, MOV
+
 
 class Frame:
     def __init__(self, cfg_path):

@@ -3,9 +3,9 @@ import os, datetime
 import pickle
 from configparser import ConfigParser
 import shutil
+import draw
 
 from frame import Frame
-import draw
 
 
 class Sim:

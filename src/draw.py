@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 import gc
-from bee import FREE, STAT, MOV
+
+from bee import FREE
 
 T_MIN_DRAW = 10
 T_MAX_DRAW = 35

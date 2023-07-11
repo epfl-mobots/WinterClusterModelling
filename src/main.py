@@ -1,10 +1,11 @@
 """Script to initiate simulations and set the parameters."""
-from sim import Sim
-import numpy as np
 from tqdm import tqdm
 from argparse import ArgumentParser
 import os
 import configparser
+
+from sim import Sim
+
 
 #Parameter description with default values
 # bee_param = {

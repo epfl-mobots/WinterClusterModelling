@@ -2,12 +2,10 @@
 
 import numpy as np
 import random
-#import sys
-#sys.path.append("C:\\Users\\Louise\\Documents\\EPFL\\MA4\\Project\\WinterClusterModelling\\sumpter")
 from configparser import ConfigParser
 import ast
 
-from bee import Bee, FREE, STAT, MOV
+from bee import Bee, FREE, STAT, MOV, initBeeBehaviour
 
 
 class Frame:
@@ -65,16 +63,16 @@ class Frame:
         #history of temperature field at every timestep
         self.tempField_save = [self.tempField]
 
-        self.beeTempField = self.t_amb*np.ones(self.dims_b)
-        self.Tmax = [self.t_amb]
-        self.Tcs = [self.t_amb]
-        self.Tmax_j = [0]
-        self.meanT = [self.t_amb]
-        self.sigT = [0]
+        self.beeTempField = self.t_amb*np.ones(self.dims_b) # T° field for bees
+        self.Tmax = [self.t_amb]                            # History of max T°
+        self.Tcs = [self.t_amb]                             # History of T° at centroid
+        self.Tmax_j = [0]                                   # History of j coordinate of max T° position
+        self.meanT = [self.t_amb]                           # History of mean T°
+        self.sigT = [0]                                     # History of std T°
 
         #colony initialisation
         self.n_bees = cfg.getint('hive','n_bees')
-        self.beeGrid = np.zeros(self.dims_b) # Grid of bees
+        self.beeGrid = np.zeros(self.dims_b)                # Grid of bees
         self.colony = np.asarray(self.init_colony(self.n_bees,cfg.get('hive','init_shape'),cfg['bee'])) #List of bees
         self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         self.bgs_save = [self.beeGrid.copy()]
@@ -89,6 +87,8 @@ class Frame:
 
     def init_colony(self,_n_bees,_init_shape,_bee_param):
         """Build the list of agents (Bee objects) by random draw according to param."""
+        initBeeBehaviour(_bee_param) # Initialise bee behaviour based on _bee_param
+        
         bs = []
         for _ in range(_n_bees):
             if _init_shape=="disc": #initially in disc offset from corner
@@ -239,7 +239,7 @@ class Frame:
         
         # update measurements of temp history
         self.Tmax.append(np.amax(self.tempField))
-        self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1]) # Not sure what this is
+        self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1]) # j position of max T°
         self.meanT.append(np.mean(self.tempField))
         self.sigT.append(np.std(self.tempField))
         

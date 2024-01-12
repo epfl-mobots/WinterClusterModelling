@@ -25,10 +25,12 @@ class Sim:
 
         #Create save directory for data
         t_amb=cfg.getfloat('hive','t_amb')
-        if cfg.get('bee','alpha') == '' or cfg.getfloat('bee','alpha')== 0.0:
-            path = f'../data/{t_amb}C/sump/'
+        if cfg.get('bee','BH') == 'sumpter':
+            path = f'../data/{t_amb}C/sumpter/'
+        elif cfg.get('bee','BH') == 'explorer':
+            path = f'../data/{t_amb}C/explore/'
         else:
-            path = f'../data/{t_amb}C/exp/'
+            raise ValueError(f"Invalid bee mode: {cfg.get('bee','BH')}")
 
         todaystr = datetime.datetime.now().isoformat()
         todaystr = todaystr.replace(":","_")[0:19]
@@ -38,7 +40,7 @@ class Sim:
             os.makedirs(path+todaystr)
             os.makedirs(path+todaystr+"/graphics")
 
-        # Save parameters as a cfg file in the dir
+        # Save parameters as a cfg file in the data directory
         shutil.copyfile(cfg_path, self.savepath+"config_copy")
 
         # Initialise Frame
@@ -68,6 +70,7 @@ class Sim:
         # Meta simu variables:
         self.count=0
         self.simu_steps=cfg.getint('simu','simu_steps')
+        self.save_freq=cfg.getint('simu','save_freq')
         
         
     def start_graphic(self):
@@ -87,12 +90,12 @@ class Sim:
     Saves the Frame parameters
     """
     def save(self):
-        pat = self.savepath+f"/it_{self.count}"
-        if not os.path.isdir(pat):
-            os.mkdir(pat)
-        f = open(pat+"/frame.obj", "wb")
-        pickle.dump(self.frame,f)
-        f.close()
+        path = self.savepath+f"/it_{self.count}"
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        file = open(path+"/frame.obj", "wb")
+        pickle.dump(self.frame,file)
+        file.close()
 
     """
     Not used

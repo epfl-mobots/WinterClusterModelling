@@ -8,43 +8,43 @@ FREE = 0
 STAT = 1
 MOV = 2
 
-# constant for switching back from explore to sumpter
-MAX_BOUNCE = 2
+def initBeeBehaviour(_bee_param):
+    """Initialise the bee behaviour parameters from the config file given as argument."""
+    Bee.TminI = float(_bee_param["TminI"])
+    Bee.TmaxI = float(_bee_param["TmaxI"])
+    Bee.Tcoma = float(_bee_param["Tcoma"])
+
+    #limits of the terrain
+    Bee.imax = int(_bee_param['xmax'])
+    Bee.jmax = int(_bee_param['ymax'])
+    Bee.BH = _bee_param['BH']
+
+    if Bee.BH == 'explorer':
+        Bee.trans_mode = _bee_param['trans_mode']
+        Bee.prob_tr = float(_bee_param['alpha'])
+        Bee.max_bounce = int(_bee_param['max_bounce'])
 
 
 class Bee:
-    """Agent definition"""
+    """Class describing the bee agent."""
     def __init__(self, x, y, param):
-        """Initialisation of agent
+        """Initialisation of an agent
         x : i coordinate
         y : j coordinate
         param : agent characteristics (described in main.py)
         """
-        self.TminI = float(param["TminI"])
-        self.TmaxI = float(param["TmaxI"])
-        self.Tcoma = float(param["Tcoma"])
-
-        #limits of the terrain
-        self.imax = int(param['xmax'])
-        self.jmax = int(param['ymax'])
 
         #position
         self.i = x
         self.j = y
-        self.met_rate = 0
 
-        #states (sumpter - leave - explore)
-        self.state = 'sumpter'
-        self.exp_mode = param['mode'] # Defines wether we use additionnal behavioural rules in the experiment
-        
-        if self.exp_mode != 'sumpter_exp':
-            self.prob_mode = param['prob_mode']
-            self.prob_tr = float(param['alpha'])
+        self.state = 'sumpter' #initial state for both sumpter and explorer BH
+        if Bee.BH == 'explorer':
             self.direction = np.array([0,0])
             self.bounced = 0
     
 
-    def draw_direction(self, exclude='none'):
+    def draw_direction(self, bounced, exclude='none'):
         """Compute new target point for the agent movement.
         - exclude can be 'none' or one of the borders. Points from this border are excluded from the draw.
         """
@@ -58,6 +58,7 @@ class Bee:
         else:
             border = np.random.choice(borders,p=[1/3,1/3,1/6,1/6])
 
+        # Draw a point on the chosen border
         if border=='up':
             self.direction = np.array([0,np.random.randint(self.jmax+1)])
         if border=='down':
@@ -67,8 +68,8 @@ class Bee:
         if border=='right':
             self.direction = np.array([np.random.randint(self.imax+1),self.jmax])
         
-        #Update bounce counter for exploratory mode
-        if self.state == 'explore':
+        #Update bounce counter for exploratory BH
+        if bounced:
             self.bounced += 1
         
     def move_toward_dir(self,beeGrid,init_pos):
@@ -88,10 +89,12 @@ class Bee:
             self.i = next_pos[0]
             self.j = next_pos[1]
     
-    def update_prob(self, temp):
-        """Compute the probability of an agent to go from 'sumpter' to 'leave' mode based on temp."""
-        if self.prob_mode == 'temp_dep':
-            return self.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
+    def compute_leave_prob(self, temp):
+        """Compute the probability of an agent to go from 'sumpter' to 'leave' mode based on temp or not."""
+        if Bee.trans_mode == 'temp_dep':
+            return Bee.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
+        else:
+            return Bee.prob_tr
 
     def update(self,tempField,beeGrid,beeGrid_2nd):
         """Update of the agent state and position."""
@@ -100,16 +103,17 @@ class Bee:
         
         init_pos = np.array([self.i,self.j])
 
-        if self.exp_mode != 'sumpter_exp':
+
+        # Behviour from the different BH:
+        if Bee.BH == 'explorer':
             #Perform potential state switching
-            if self.state=='sumpter':
-                prob_alpha = self.prob_tr if self.prob_mode!='temp_dep' else self.update_prob(tempField[self.i,self.j])
-                if beeGrid_2nd[self.i,self.j]==FREE:
-                    #random draw with a probability prob_alpha to go into leave mode
-                    leave = np.random.choice([True,False],p=[prob_alpha,1-prob_alpha])
-                    if leave: #if the bee 'wants' to leave
-                        self.state = 'leave'
-                        self.draw_direction()
+            if self.state=='sumpter' and beeGrid_2nd[self.i,self.j]==FREE:
+                leave_prob = self.compute_leave_prob(tempField[self.i,self.j])
+                #random draw with a probability leave_prob to go into leave mode
+                leave = np.random.choice([True,False],p=[leave_prob,1-leave_prob])
+                if leave: #if the bee 'wants' to leave
+                    self.state = 'leave'
+                    self.draw_direction(bounced=False)
 
             elif self.state=='leave':
                 #check if neighbouring spots are empty (if they are, leaving phase is over)
@@ -124,7 +128,7 @@ class Bee:
 
             elif self.state=='explore':
                 #go back to sumpter if local temp is comfy or if bounced twice
-                if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>=MAX_BOUNCE:
+                if (tempField[self.i,self.j]>self.TminI and tempField[self.i,self.j]<self.TmaxI) or self.bounced>Bee.max_bounce:
                     beeGrid[self.i,self.j]=MOV # move the bee "down"
                     beeGrid_2nd[self.i,self.j]=FREE # free the spot in the 2nd ('leave') layer
                     self.state='sumpter'
@@ -195,13 +199,13 @@ class Bee:
             
             # if hit a wall, draw a new direction on another wall
             if self.i == self.imax:
-                self.draw_direction(exclude='down')
+                self.draw_direction(bounced=True,exclude='down')
             if self.i == 0:
-                self.draw_direction(exclude='up')
+                self.draw_direction(bounced=True,exclude='up')
             if self.j == self.jmax:
-                self.draw_direction(exclude='right')
+                self.draw_direction(bounced=True,exclude='right')
             if self.j == 0:
-                self.draw_direction(exclude='left')
+                self.draw_direction(bounced=True,exclude='left')
 
             self.move_toward_dir(beeGrid_2nd,init_pos)
 

@@ -46,26 +46,24 @@ from sim import Sim
 def script_parser():
     ''' construct argparse object to interpret the incoming command '''
     parser = ArgumentParser(exit_on_error=True)
-    group = parser.add_argument_group(required=True)
-    group.add_argument('-c', '--cfg')
-    group.add_argument('-f', '--frame')
+    parser.add_argument('-c', '--cfg', help='path to config file')
+    parser.add_argument('-f', '--frame', help='path to frame file')
     return parser
 
 def verify_cfg_file(cfg_path): 
     ''' Check if config file exists '''
-    if not os.path.isfile(cfg_path):
-        raise FileNotFoundError(f"No config file found at '{args.cfg}'") 
-    abs_path=os.path.realpath(cfg_path)
+    relative_path="../configs/"+cfg_path
+    abs_path=os.path.realpath(relative_path)
+    if not os.path.isfile(abs_path):
+        raise FileNotFoundError(f"No config file found at '{abs_path}'") 
+    
     cfg = configparser.ConfigParser()
     cfg.read(abs_path)  # abs_path is a canonical path
+
     if len(cfg.sections())!=4:
         raise configparser.ParsingError(f"Invalid number of sections: {cfg.sections()}")
     if 'bee' not in cfg or 'hive' not in cfg or 'hotspot' not in cfg or 'simu' not in cfg:
-        raise configparser.ParsingError(f"Could not find the expected sections: bee, hive, hotspot")
-    if len(cfg.options("bee"))!=8 or len(cfg.options("hotspot")) !=8 or len(cfg.options("hive")) != 10:
-        raise configparser.ParsingError(f"Invalid number of options per section")
-    if cfg['hive']['n_bees'] is None:
-        raise configparser.ParsingError(f"No number of bees specified")
+        raise configparser.ParsingError(f"Could not find the expected sections: bee, hive, hotspot, simu")
     
     return abs_path
 
@@ -79,12 +77,13 @@ if __name__ == "__main__":
 
     sim = Sim(cfg_path=abs_cfg_path, frame_save=args.frame)
     
-    SIM_STEPS=sim.simu_steps
+    simu_steps=sim.simu_steps
+    save_freq=sim.save_freq
 
     print("Starting simulation.")
-    for i in tqdm(range(SIM_STEPS)):
+    for i in tqdm(range(simu_steps)):
         sim.update()
-        if i%10000==0:
+        if i%save_freq==0:
             sim.save()
         
     sim.end()

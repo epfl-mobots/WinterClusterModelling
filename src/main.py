@@ -6,43 +6,6 @@ import configparser
 
 from sim import Sim
 
-
-#Parameter description with default values
-# bee_param = {
-#     "Tcoma" : 8,
-#     "TminI" : 18,
-#     "TmaxI" : 23,
-#     "xmax"  : 49, #dimensions of the agents' possible positions
-#     "ymax"  : 99,
-#     "prob_mode" : 'temp_dep',
-#     "alpha" : a
-# }
-
-# hotspot = {
-#     "j_c" : 4/5, #if coord is an empty list, j position of hotspot as a fraction of the horizontal terrain dimension
-#     "i_c" : 1/2, #if coord is an empty list, i position of hotspot as a fraction of the vertical terrain dimension
-#     "sz" : 1/4, #if coord is an empty list, dimension of hotspot as a fraction of the vertical terrain dimension
-#     "coord" : [[0,3]], #coordinates of the hotspot (first coordinate in [0,1], second in [0,4])
-#     "Tspot" : 20.5, 
-#     "on" : 0, #time at which the hotspot is turned on
-#     "off" : 100000 #time at which the hotspot is turned off
-# }
-
-# hive_param = {
-#     "init_shape" : "random", #can also be "disc" or "ring"
-#     "dims_b" : (50,100), # Dimensions of the frame
-#     "n_bees" : 200,
-#     "tau" : 8, # bee time step
-#     "g" : 2, # grid multiplication between temperature and bees
-#     "bee_param" : bee_param,
-#     "dims_temp" : (100,200), 
-#     "tempA" : 13, 
-#     "lambda_air" : 1.0,
-#     "lambda_bee" : 0.45,
-#     "hq20" : 0.037,
-#     "gamma" : np.log(2.4)/10
-# }
-
 def script_parser():
     ''' construct argparse object to interpret the incoming command '''
     parser = ArgumentParser(exit_on_error=True)

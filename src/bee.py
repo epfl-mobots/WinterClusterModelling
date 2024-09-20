@@ -24,7 +24,6 @@ def initBeeBehaviour(_bee_param):
         Bee.prob_tr = float(_bee_param['alpha'])
         Bee.max_bounce = int(_bee_param['max_bounce'])
 
-
 class Bee:
     """Class describing the bee agent."""
     def __init__(self, x, y, param):

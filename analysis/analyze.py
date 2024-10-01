@@ -4,18 +4,23 @@ import numpy as np
 import gc
 import os
 import glob
+from configparser import ConfigParser
 
 from plot_temp import plot_temperature, plot_combined, plot_bee_distrib, plot_combined_hive
 
 #Replace with desired path
-path = "../data/"
+data_path = "../data/"
+dir_path = "12.0C/sumpter/2024-09-30T12_36_00/it_106/"
 
-#dir = glob.glob(path+'2023-0*')
-dir = [path+"12C/sump/2023-07-04T15_46_13/it_10001/"]
+dir = data_path+dir_path
 
-for d in dir:
-    if not os.path.isdir(d+"analysis"):
-        os.mkdir(d+"analysis")
+if not os.path.isdir(dir+"analysis"):
+    os.mkdir(dir+"analysis")
 
-    plot_combined(d)
+# Fetch the config file from the directory above
+cfg_path = glob.glob(dir+"../config*")[0]
+# Open the associated config file
+cfg = ConfigParser()
+cfg.read(cfg_path)
+plot_combined(dir,cfg)
     

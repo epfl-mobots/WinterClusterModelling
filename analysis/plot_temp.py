@@ -232,9 +232,11 @@ def plot_combined_hive(srcDir):
         gc.collect()
 
 
-def plot_combined(srcDir):
+def plot_combined(srcDir, cfg):
     """ Plots bee distribution by column along with centroid and max temperature from data in srcDir. 
     Plots are saved in the "analysis" subfolder.
+    param srcDir: path to the directory containing the data (containging frame.obj)
+    param cfg: ConfigParser object containing the configuration of the simulation
     """
     if not os.path.isdir(srcDir+"/analysis"):
         os.mkdir(srcDir+"/analysis")
@@ -282,8 +284,10 @@ def plot_combined(srcDir):
         ax2.plot(range(200), max_temps, color = 'blue', linestyle='--', linewidth=0.5)
 
         # Extract Tmin and Tmax of comfort zone from bees' config file
-        Tmin = frame_save.colony[0].TminI
-        Tmax = frame_save.colony[0].TmaxI
+        # Tmin = frame_save.colony[0].TminI
+        # Tmax = frame_save.colony[0].TmaxI
+        Tmin = cfg.getfloat('bee','TminI')
+        Tmax = cfg.getfloat('bee','TmaxI')
         
         #shading comfort area
         ax2.fill_between(range(200), temp_to_plot, where=((temp_to_plot >= Tmin) & (temp_to_plot <= Tmax)), color='blue', alpha=0.3, label='Comfort zone for bees')

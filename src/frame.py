@@ -225,11 +225,11 @@ class Frame:
         """Update the Frame state. Called at each timestep.
         - count is the iteration number
         """
-
-        if self.hotspot_on==count:
-            self.set_hotspot()
-        elif self.hot_on and self.hotspot_off==count:
-            self.hot_on = False
+        if self.hot_used: # Hotspot management
+            if self.hotspot_on==count:
+                self.set_hotspot()
+            elif self.hot_on and self.hotspot_off==count:
+                self.hot_on = False
 
         # tau temperature updates for each bee update
         Pij=(self.beeGrid)%2

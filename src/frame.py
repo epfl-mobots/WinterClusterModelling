@@ -50,8 +50,8 @@ class Frame:
                 self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
             else:
                 self.n_spot = 1
-                self.hotspot_i = [[int((cfg.getfloat('hotspot','i_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','i_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
+                self.hotspot_i = [[int(cfg.getfloat('hotspot','i_c')*self.dims_temp[0]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2),int((cfg.getfloat('hotspot','i_c')*self.dims_temp[0]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
 
                 self.Tspot = cfg.getfloat('hotspot','Tspot')
                 if self.hotspot_on==0:
@@ -159,9 +159,8 @@ class Frame:
                 self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
             else:
                 self.n_spot = 1
-                self.hotspot_i = [[int((cfg.getfloat('hotspot','i_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','i_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-
+                self.hotspot_i = [[int(cfg.getfloat('hotspot','i_c')*self.dims_temp[0]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2),int((cfg.getfloat('hotspot','i_c')*self.dims_temp[0]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
                 self.Tspot = cfg.getfloat('hotspot','Tspot')
                 if self.hotspot_on==0:
                     self.set_hotspot()
@@ -186,20 +185,34 @@ class Frame:
         """
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
         return f_ij
-
-    def diff(self,i,j,lamdas):
+    
+    def diff(self, lamdas):
         """Compute the diffusion term in the temperature equation for position (i,j).
             Lij=La-Pij*(La-Lb) --> We first compute Pij
         """
-        d = 0
-        #l=self.l_air-Pij[i//2,j//2]*(self.l_air-self.l_bee)
-        #lamdas = self.l_bee if (self.beeGrid==STAT) else self.l_air
-
-        for ip,jp in zip([i-1,i,i+1,i],[j,j-1,j,j+1]):
-            #lp = self.l_bee if self.beeGrid[ip//2,jp//2]==STAT else self.l_air
-            d += lamdas[i//self.g,j//self.g]*lamdas[ip//self.g,jp//self.g]*(self.tempField[ip,jp]-self.tempField[i,j])
-
-        return d/4  
+        d, lamdas_aug = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
+        lambdas_isup, lambdas_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
+        lambdas_jsup, lambdas_jinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
+        tempfield_isup, tempfield_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
+        tempfield_jsup, tempfield_jinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
+        #calculate lamda matrix in dimension of temperature grid
+        lamdas_aug = np.zeros(self.dims_temp)
+        for i in range(self.dims_temp[0]):
+            lamdas_row = np.repeat(lamdas[i//2, :], 2)
+            lamdas_aug[i:i+1, :] = lamdas_row
+        lambdas_isup = np.roll(lamdas_aug, 1, axis=0)
+        lambdas_iinf = np.roll(lamdas_aug, -1, axis=0)
+        lambdas_jsup = np.roll(lamdas_aug, 1, axis=1)
+        lambdas_jinf = np.roll(lamdas_aug, -1, axis=1)
+        
+        tempfield_isup = np.roll(self.tempField, 1, axis=0) - self.tempField
+        tempfield_iinf = np.roll(self.tempField, -1, axis=0) - self.tempField
+        tempfield_jsup = np.roll(self.tempField, 1, axis=1) - self.tempField
+        tempfield_jinf = np.roll(self.tempField, -1, axis=1) - self.tempField
+        
+        neighbors = np.multiply(lambdas_isup, tempfield_isup) + np.multiply(lambdas_iinf, tempfield_iinf) + np.multiply(lambdas_jsup, tempfield_jsup) + np.multiply(lambdas_jinf, tempfield_jinf)
+        d = np.multiply(lamdas_aug, neighbors)/4
+        return d 
 
     def h(self,i,j):
         """Checks whether position (i,j) is within the boundaries of the hotspot."""
@@ -207,9 +220,10 @@ class Frame:
             if i>self.hotspot_i[n][0] and i<self.hotspot_i[n][1] and j>self.hotspot_j[n][0] and j<self.hotspot_j[n][1]:
                 return n
         return -1
-
+    
     def update_temp(self,lamdas):
         """Update the temperature field."""
+        diffusion_term = self.diff(lamdas)
         for i in range(1,self.dims_temp[0]-1): # Exclude borders because initial condition
             for j in range(1,self.dims_temp[1]-1):
                 if self.hot_on:
@@ -217,9 +231,8 @@ class Frame:
                     if hotspot!=-1:
                         j=self.hotspot_j[hotspot][1]-1 #Skips all other pixels on the hotspot
                         continue
-                diffusion_term= self.diff(i,j,lamdas)
                 heating = self.f(i,j)
-                self.tempField[i,j] += diffusion_term + heating
+                self.tempField[i,j] += diffusion_term[i,j] + heating
 
     def update(self,count):
         """Update the Frame state. Called at each timestep.

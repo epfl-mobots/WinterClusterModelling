@@ -50,9 +50,9 @@ class Frame:
                 self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
             else:
                 self.n_spot = 1
-                self.hotspot_i = [[int((cfg.getfloat('hotspot','i_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','i_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-
+                self.hotspot_i = [[int(cfg.getfloat('hotspot','i_c')*self.dims_temp[0]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2),int((cfg.getfloat('hotspot','i_c')*self.dims_temp[0]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
+               
                 self.Tspot = cfg.getfloat('hotspot','Tspot')
                 if self.hotspot_on==0:
                     self.set_hotspot()
@@ -159,9 +159,9 @@ class Frame:
                 self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
             else:
                 self.n_spot = 1
-                self.hotspot_i = [[int((cfg.getfloat('hotspot','i_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','i_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')-cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0]),int((cfg.getfloat('hotspot','j_c')+cfg.getfloat('hotspot','sz')/2)*self.dims_temp[0])]]
-
+                self.hotspot_i = [[int(cfg.getfloat('hotspot','i_c')*self.dims_temp[0]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2),int((cfg.getfloat('hotspot','i_c')*self.dims_temp[0]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
+               
                 self.Tspot = cfg.getfloat('hotspot','Tspot')
                 if self.hotspot_on==0:
                     self.set_hotspot()
@@ -210,6 +210,7 @@ class Frame:
 
     def update_temp(self,lamdas):
         """Update the temperature field."""
+        tempField_ = self.tempField
         for i in range(1,self.dims_temp[0]-1): # Exclude borders because initial condition
             for j in range(1,self.dims_temp[1]-1):
                 if self.hot_on:
@@ -219,8 +220,9 @@ class Frame:
                         continue
                 diffusion_term= self.diff(i,j,lamdas)
                 heating = self.f(i,j)
-                self.tempField[i,j] += diffusion_term + heating
-
+                tempField_[i,j] += diffusion_term + heating
+        self.tempField = tempField_
+        
     def update(self,count):
         """Update the Frame state. Called at each timestep.
         - count is the iteration number

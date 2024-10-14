@@ -210,7 +210,7 @@ class Frame:
 
     def update_temp(self,lamdas):
         """Update the temperature field."""
-        tempField_ = self.tempField
+        tempField_ = self.tempField.copy()
         for i in range(1,self.dims_temp[0]-1): # Exclude borders because initial condition
             for j in range(1,self.dims_temp[1]-1):
                 if self.hot_on:

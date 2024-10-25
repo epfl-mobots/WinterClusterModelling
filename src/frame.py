@@ -20,49 +20,92 @@ class Frame:
         #Store basic parameters:
         self.tau = cfg.getint('hive','tau')
         self.g = cfg.getint('hive','g')
-        self.dims_b = ast.literal_eval(cfg.get('hive','dims_b'))
         self.l_bee = cfg.getfloat('hive','lambda_bee')
         self.l_air = cfg.getfloat('hive','lambda_air')
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
         self.t_amb = cfg.getfloat('hive','t_amb')
-
-        #temperature field initialisation - initially homogenous at ambient temperature
+        self.alternative = cfg.getboolean('hotspot','Alternative')
+        self.dims_b = list(ast.literal_eval(cfg.get('Alternative1','dims_b')))
+        self.outside = cfg.getfloat('Alternative2','outside')
+        self.b = cfg.getfloat('Alternative2','b')
+        self.t = cfg.getfloat('Alternative2','t')
+        self.bee_surf = cfg.getfloat('Alternative2','bee_surf')
+        self.hotspot_space = cfg.getfloat('Alternative2','hotspot_space')
+        self.hotspot_dim = list(ast.literal_eval(cfg.get('Alternative2','hotspot_dim')))
+        
+        #Converting cm data in pixels
+        if self.alternative:
+            self.hotspot_space = self.convert_cm_to_pixels(self.hotspot_space)
+            self.hotspot_dim[0] = self.convert_cm_to_pixels(self.hotspot_dim[0])
+            self.hotspot_dim[1] = self.convert_cm_to_pixels(self.hotspot_dim[1])
+            self.outside = self.convert_cm_to_pixels(self.outside)
+            self.b = self.convert_cm_to_pixels(self.b)
+            self.t = self.convert_cm_to_pixels(self.t)
+        
+        if self.alternative:
+            #Calculation of dimensions' frame
+            self.dict_hotspot = {key: ast.literal_eval(value) for key, value in cfg['hotspot_dictionnary'].items()}
+            self.nb_hotspots_row = len(self.dict_hotspot)/4
+            self.dims_b[1] = int(self.nb_hotspots_row*self.hotspot_dim[1] + (self.nb_hotspots_row+1)*self.hotspot_space + self.outside*2)
+            self.dims_b[0] = int((2*self.hotspot_dim[0] + 3*self.hotspot_space + self.outside + self.t)*2 + self.b)
+            self.single_height = int(2*self.hotspot_dim[0] + 3*self.hotspot_space + self.t)
+            
+        #Temperature field initialisation - initially homogenous at ambient temperature
         self.dims_temp = tuple(self.g*dim for dim in self.dims_b)
         self.tempField = self.t_amb*np.ones(self.dims_temp)
-
+            
         # Hotspot initialisation
         if cfg.getboolean('hotspot','used'):
             self.hot_used=True
+            self.hotspot_i =list()
+            self.hotspot_j = list()
             self.hot_on=False
-            self.hotspot_on=cfg.getint('hotspot','on')
-            self.hotspot_off=cfg.getint('hotspot','off')
-            if cfg.get('hotspot','coord') != '':
-                #computing positions of all physical hotspots depending on the temperature field dimensions
-                self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
-                self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
-                self.sz_spot = int(0.34*self.dims_temp[0])
-
-                #setting position of hotspot
-                coords=ast.literal_eval(cfg.get('hotspot','coord'))
-                self.n_spot = len(coords)
-                self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in coords]
-                self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
-            else:
-                self.n_spot = 1
-                self.hotspot_i = [[int(cfg.getfloat('hotspot','i_c')*self.dims_temp[0]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2),int((cfg.getfloat('hotspot','i_c')*self.dims_temp[0]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
-                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
-
-                self.Tspot = cfg.getfloat('hotspot','Tspot')
+            
+            #Hotspots initialisation for alternative 1
+            if self.alternative==False:
+                self.hotspot_on=cfg.getint('Alternative1','on')
+                self.hotspot_off=cfg.getint('Alternative1','off')
+                self.n_spot_on = 1
+                self.hotspot_i = [[int(cfg.getfloat('Alternative1','i_c')*self.dims_temp[0]-cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2),int((cfg.getfloat('Alternative1','i_c')*self.dims_temp[0]+cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1]-cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1]+cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
+                self.Tspot = cfg.getfloat('Alternative1','Tspot')
                 if self.hotspot_on==0:
                     self.set_hotspot()
+            
+            #Hotspots initialisation for alternative 2        
+            else:
+                self.n_spot_on = 0
+                #Implement hotspots coordinates
+                line1 = int((self.outside + self.t + self.b + 5*self.hotspot_space + self.hotspot_dim[0]*7/2)*self.g)
+                line2 = int((self.outside + self.t + self.b + 4*self.hotspot_space + self.hotspot_dim[0]*5/2)*self.g)
+                line3 = int((self.outside + 2*self.hotspot_space + self.hotspot_dim[0]*3/2)*self.g)
+                line4 = int((self.outside + self.hotspot_space + self.hotspot_dim[0]/2)*self.g)
+                
+                for location in self.dict_hotspot.keys():
+                    if self.dict_hotspot[location]['line'] == 1:
+                        self.dict_hotspot[location]['coord_i'] = line1
+                    elif self.dict_hotspot[location]['line'] == 2:
+                        self.dict_hotspot[location]['coord_i'] = line2
+                    elif self.dict_hotspot[location]['line'] == 3:
+                        self.dict_hotspot[location]['coord_i'] = line3
+                    elif self.dict_hotspot[location]['line'] == 4:
+                        self.dict_hotspot[location]['coord_i'] = line4
+                    col = self.dict_hotspot[location]['column']
+                    self.dict_hotspot[location]['coord_j'] = int((self.outside + col*self.hotspot_space + (col- 1/2)*self.hotspot_dim[1])*self.g)    
+                # Turn on hotspots
+                    if self.dict_hotspot[location]['Temperature'] != -1:
+                        self.n_spot_on += 1
+                        self.hotspot_i.append([int(self.dict_hotspot[location]['coord_i'] - self.hotspot_dim[0]*self.g/2), int(self.dict_hotspot[location]['coord_i'] + self.hotspot_dim[0]*self.g/2)])
+                        self.hotspot_j.append([int(self.dict_hotspot[location]['coord_j'] - self.hotspot_dim[1]*self.g/2), int(self.dict_hotspot[location]['coord_j'] + self.hotspot_dim[1]*self.g/2)])
+                        self.Tspot = self.dict_hotspot[location]['Temperature']
+                self.set_hotspot()    
         else:
             self.hot_used=False
             self.hot_on=False
 
-        #history of temperature field at every timestep
+        #History of temperature field at every timestep
         self.tempField_save = [self.tempField]
-
         self.beeTempField = self.t_amb*np.ones(self.dims_b) # T° field for bees
         self.Tmax = [self.t_amb]                            # History of max T°
         self.Tcs = [self.t_amb]                             # History of T° at centroid
@@ -70,11 +113,14 @@ class Frame:
         self.meanT = [self.t_amb]                           # History of mean T°
         self.sigT = [0]                                     # History of std T°
 
-        #colony initialisation
+        #Colony initialisation
         self.n_bees = cfg.getint('hive','n_bees')
         self.beeGrid = np.zeros(self.dims_b)                # Grid of bees
         self.colony = np.asarray(self.init_colony(self.n_bees,cfg.get('hive','init_shape'),cfg['bee'])) #List of bees
-        self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
+        if self.n_bees>0:
+            self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
+        else:
+            self.centroid = [0,0]
         self.bgs_save = [self.beeGrid.copy()]
 
         #2nd layer of beeGrid for bees in 'leave' state
@@ -134,36 +180,72 @@ class Frame:
         #Store basic parameters:
         self.tau = cfg.getint('hive','tau')
         self.g = cfg.getint('hive','g')
-        self.dims_b = ast.literal_eval(cfg.get('hive','dims_b'))
         self.l_bee = cfg.getfloat('hive','lambda_bee')
         self.l_air = cfg.getfloat('hive','lambda_air')
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
         self.t_amb = cfg.getfloat('hive','t_amb')
+        self.alternative = cfg.getboolean('hotspot','Alternative')
+        self.dims_b = list(ast.literal_eval(cfg.get('Alternative1','dims_b')))
+        self.outside = cfg.getfloat('Alternative2','outside')
+        self.b = cfg.getfloat('Alternative2','b')
+        self.t = cfg.getfloat('Alternative2','t')
+        self.bee_surf = cfg.getfloat('Alternative2','bee_surf')
+        self.hotspot_space = cfg.getfloat('Alternative2','hotspot_space')
+        self.hotspot_dim = list(ast.literal_eval(cfg.get('Alternative2','hotspot_dim')))
+        
+        #Converting cm data in pixels
+        if self.alternative:
+            self.hotspot_space = self.convert_cm_to_pixels(self.hotspot_space)
+            self.hotspot_dim[0] = self.convert_cm_to_pixels(self.hotspot_dim[0])
+            self.hotspot_dim[1] = self.convert_cm_to_pixels(self.hotspot_dim[1])
+            self.outside = self.convert_cm_to_pixels(self.outside)
+            self.b = self.convert_cm_to_pixels(self.b)
+            self.t = self.convert_cm_to_pixels(self.t)
 
+        # Hotspot initialisation
         if cfg.getboolean('hotspot','used'):
             self.hot_used=True
+            self.hotspot_i =list()
+            self.hotspot_j = list()
             self.hot_on=False
-            self.hotspot_on=cfg.getint('hotspot','on')
-            self.hotspot_off=cfg.getint('hotspot','off')
-            if cfg.get('hotspot','coord') != '':
-                #computing positions of all physical hotspots depending on the temperature field dimensions
-                self.i_hot = [int(0.1*self.dims_temp[0]),int(0.56*self.dims_temp[0])]
-                self.j_hot = [int((0.03+0.4*k)*self.dims_temp[0]) for k in range(5)]
-                self.sz_spot = int(0.34*self.dims_temp[0])
-
-                #setting position of hotspot
-                coords=ast.literal_eval(cfg.get('hotspot','coord'))
-                self.n_spot = len(coords)
-                self.hotspot_i = [[self.i_hot[i],self.i_hot[i]+self.sz_spot] for [i,_] in coords]
-                self.hotspot_j = [[self.j_hot[j],self.j_hot[j]+self.sz_spot] for [_,j] in coords]
-            else:
-                self.n_spot = 1
-                self.hotspot_i = [[int(cfg.getfloat('hotspot','i_c')*self.dims_temp[0]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2),int((cfg.getfloat('hotspot','i_c')*self.dims_temp[0]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
-                self.hotspot_j = [[int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]-cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('hotspot','j_c')*self.dims_temp[1]+cfg.getfloat('hotspot','sz')*self.dims_temp[0]/2))]]
-                self.Tspot = cfg.getfloat('hotspot','Tspot')
+            
+            if self.alternative==False:
+                self.hotspot_on=cfg.getint('Alternative1','on')
+                self.hotspot_off=cfg.getint('Alternative1','off')
+                self.n_spot_on = 1
+                self.hotspot_i = [[int(cfg.getfloat('Alternative1','i_c')*self.dims_temp[0] - cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2),int((cfg.getfloat('Alternative1','i_c')*self.dims_temp[0] + cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1] - cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1] + cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
+                self.Tspot = cfg.getfloat('Alternative1','Tspot')
                 if self.hotspot_on==0:
-                    self.set_hotspot()
+                    self.set_hotspot()  
+            else:
+                self.n_spot_on = 0
+                #Implement hotspots coordinates
+                line1 = int((self.outside + self.t + self.b + 5*self.hotspot_space + self.hotspot_dim[0]*7/2)*self.g)
+                line2 = int((self.outside + self.t + self.b + 4*self.hotspot_space + self.hotspot_dim[0]*5/2)*self.g)
+                line3 = int((self.outside + 2*self.hotspot_space + self.hotspot_dim[0]*3/2)*self.g)
+                line4 = int((self.outside + self.hotspot_space + self.hotspot_dim[0]/2)*self.g)
+                for location in self.dict_hotspot.keys():
+                    if self.dict_hotspot[location]['line'] == 1:
+                        self.dict_hotspot[location]['coord_i'] = line1
+                    elif self.dict_hotspot[location]['line'] == 2:
+                        self.dict_hotspot[location]['coord_i'] = line2
+                    elif self.dict_hotspot[location]['line'] == 3:
+                        self.dict_hotspot[location]['coord_i'] = line3
+                    elif self.dict_hotspot[location]['line'] == 4:
+                        self.dict_hotspot[location]['coord_i'] = line4
+                    col = self.dict_hotspot[location]['column']
+                    self.dict_hotspot[location]['coord_j'] = int((self.outside + col*self.hotspot_space + (col- 1/2)*self.hotspot_dim[1])*self.g)   
+                # Turn on hotspots
+                for location in self.dict_hotspot.keys():
+                    if self.dict_hotspot[location]['Temperature'] != -1:
+                        self.n_spot_on += 1
+                        self.hotspot_i.append([int(self.dict_hotspot[location]['coord_i'] - self.hotspot_dim[0]*self.g/2), int(self.dict_hotspot[location]['coord_i'] + self.hotspot_dim[0]*self.g/2)])
+                        self.hotspot_j.append([int(self.dict_hotspot[location]['coord_j'] - self.hotspot_dim[1]*self.g/2), int(self.dict_hotspot[location]['coord_j'] + self.hotspot_dim[1]*self.g/2)])
+                        self.Tspot = self.dict_hotspot[location]['Temperature']
+                self.set_hotspot()
+                
         else:
             self.hot_used=False
             self.hot_on=False
@@ -175,10 +257,11 @@ class Frame:
 
     def set_hotspot(self):
         """Turn on the hotspot. Sets its area to a fixed temperature."""
-        self.hot_on = True
+        if self.alternative == False:
+            self.hot_on = True
         for a,b in zip(self.hotspot_i,self.hotspot_j):
             self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
-
+                    
     def f(self,i,j):
         """Compute the metabolic temperature contribution of the agent at position (i,j).
         Returns 0 if no agent is at this position.
@@ -216,7 +299,7 @@ class Frame:
 
     def h(self,i,j):
         """Checks whether position (i,j) is within the boundaries of the hotspot."""
-        for n in range(self.n_spot):
+        for n in range(self.n_spot_on):
             if i>self.hotspot_i[n][0] and i<self.hotspot_i[n][1] and j>self.hotspot_j[n][0] and j<self.hotspot_j[n][1]:
                 return n
         return -1
@@ -224,12 +307,12 @@ class Frame:
     def update_temp(self,lamdas):
         """Update the temperature field."""
         diffusion_term = self.diff(lamdas)
-        for i in range(1,self.dims_temp[0]-1): # Exclude borders because initial condition
-            for j in range(1,self.dims_temp[1]-1):
+        for i in range(1,self.dims_temp[0] - 1): # Exclude borders because initial condition
+            for j in range(1,self.dims_temp[1] - 1):
                 if self.hot_on:
                     hotspot= self.h(i,j)
-                    if hotspot!=-1:
-                        j=self.hotspot_j[hotspot][1]-1 #Skips all other pixels on the hotspot
+                    if hotspot!= -1:
+                        j=self.hotspot_j[hotspot][1] - 1 #Skips all other pixels on the hotspot
                         continue
                 heating = self.f(i,j)
                 self.tempField[i,j] += diffusion_term[i,j] + heating
@@ -238,19 +321,23 @@ class Frame:
         """Update the Frame state. Called at each timestep.
         - count is the iteration number
         """
-        if self.hot_used: # Hotspot management
-            if self.hotspot_on==count:
+        if self.alternative == False:
+            if self.hot_used: # Hotspot management
+                if self.hotspot_on==count:
+                    self.set_hotspot()
+                elif self.hot_on and self.hotspot_off==count:
+                    self.hot_on = False
+        else:
+            if self.hot_used: # Hotspot management
                 self.set_hotspot()
-            elif self.hot_on and self.hotspot_off==count:
-                self.hot_on = False
 
-        # tau temperature updates for each bee update
+        # Tau temperature updates for each bee update
         Pij=(self.beeGrid)%2
         lamdas=self.l_air-Pij*(self.l_air-self.l_bee)
         for _ in range(self.tau):
             self.update_temp(lamdas)
         
-        # update measurements of temp history
+        # Update measurements of temp history
         self.Tmax.append(np.amax(self.tempField))
         self.Tmax_j.append(np.unravel_index(np.argmax(self.tempField, axis=None), self.tempField.shape)[1]) # j position of max T°
         self.meanT.append(np.mean(self.tempField))
@@ -264,7 +351,10 @@ class Frame:
             self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd)
         
         #Saving state
-        self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
+        if self.n_bees>0:
+            self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
+        else:
+            self.centroid = [0,0]
         self.Tcs.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
         self.tempField_save.append(self.tempField.copy())
         self.bgs_save.append(self.beeGrid.copy())
@@ -277,3 +367,8 @@ class Frame:
         #   Using the reshape method for faster computation
         beeTempField = self.tempField.reshape(np.shape(self.tempField)[0]//2, 2, np.shape(self.tempField)[1]//2, 2)
         self.beeTempField = beeTempField.mean(axis=(1,3))
+        
+    def convert_cm_to_pixels(self, cm):
+        """Converts a distance in cm to pixels in bee grid, based on the volume taken by a bee"""
+        pixels = round(cm/np.sqrt(self.bee_surf))
+        return pixels

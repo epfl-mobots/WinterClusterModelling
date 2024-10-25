@@ -23,7 +23,7 @@ def verify_cfg_file(cfg_path):
     cfg = configparser.ConfigParser()
     cfg.read(abs_path)  # abs_path is a canonical path
 
-    if len(cfg.sections())!=4:
+    if len(cfg.sections())!=7:
         raise configparser.ParsingError(f"Invalid number of sections: {cfg.sections()}")
     if 'bee' not in cfg or 'hive' not in cfg or 'hotspot' not in cfg or 'simu' not in cfg:
         raise configparser.ParsingError(f"Could not find the expected sections: bee, hive, hotspot, simu")

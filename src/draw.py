@@ -21,26 +21,25 @@ cmap_temp = LinearSegmentedColormap.from_list("mycmap", colors)
 
 def update(frame,path,count=None):
     """Draw the simulation state described by frame and save image in path"""
-    
     #plotting temperatures as background
-    plt.matshow(frame.tempField,fignum=count,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
+    plt.matshow(frame.tempField,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
 
     #color bar
     plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=range(int(np.min(frame.tempField)),int(np.max(frame.tempField)+2)), boundaries=range(int(np.min(frame.tempField))-1,int(np.max(frame.tempField)+2)), label='Temperature [°C]')
 
     #Plotting frame
-    if frame.alternative:
-        plt.plot([frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [frame.outside*frame.g, frame.outside*frame.g], color='black')
-        plt.plot([frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [(frame.outside + frame.single_height)*frame.g, (frame.outside + frame.single_height)*frame.g], color='black')
-        plt.plot([frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [(frame.outside + frame.single_height - frame.t)*frame.g, (frame.outside + frame.single_height - frame.t)*frame.g], color='black')
-        plt.plot([frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [(frame.outside + frame.single_height + frame.b)*frame.g, (frame.outside + frame.single_height + frame.b)*frame.g], color='black')
-        plt.plot([frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [frame.dims_temp[0] -(frame.outside + frame.t)*frame.g, frame.dims_temp[0] -(frame.outside + frame.t)*frame.g], color='black')
-        plt.plot([frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [frame.dims_temp[0] - frame.outside*frame.g, frame.dims_temp[0] - frame.outside*frame.g], color='black')
+    if frame.RealisticFrame:
+        plt.plot([frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g - 0.5], [frame.outside*frame.g - 0.5, frame.outside*frame.g - 0.5], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g - 0.5], [(frame.outside + frame.single_height)*frame.g - 0.5, (frame.outside + frame.single_height)*frame.g - 0.5], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g - 0.5], [(frame.outside + frame.single_height - frame.t)*frame.g - 0.5, (frame.outside + frame.single_height - frame.t)*frame.g - 0.5], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g - 0.5], [(frame.outside + frame.single_height + frame.b)*frame.g - 0.5, (frame.outside + frame.single_height + frame.b)*frame.g -0.5], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g - 0.5], [frame.dims_temp[0] -(frame.outside + frame.t)*frame.g - 0.5, frame.dims_temp[0] -(frame.outside + frame.t)*frame.g - 0.5], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g - 0.5], [frame.dims_temp[0] - frame.outside*frame.g - 0.5, frame.dims_temp[0] - frame.outside*frame.g - 0.5], color='black')
     
-        plt.plot([frame.outside*frame.g, frame.outside*frame.g], [frame.outside*frame.g, (frame.outside + frame.single_height)*frame.g], color='black')
-        plt.plot([frame.outside*frame.g, frame.outside*frame.g], [(frame.outside + frame.single_height + frame.b)*frame.g, frame.dims_temp[0] - frame.outside*frame.g], color='black')
-        plt.plot([frame.dims_temp[1] - frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [frame.outside*frame.g, (frame.outside + frame.single_height)*frame.g], color='black')
-        plt.plot([frame.dims_temp[1] - frame.outside*frame.g, frame.dims_temp[1] - frame.outside*frame.g], [(frame.outside + frame.single_height + frame.b)*frame.g, frame.dims_temp[0] - frame.outside*frame.g], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.outside*frame.g- 0.5], [frame.outside*frame.g - 0.5, (frame.outside + frame.single_height)*frame.g - 0.5], color='black')
+        plt.plot([frame.outside*frame.g - 0.5, frame.outside*frame.g- 0.5], [(frame.outside + frame.single_height + frame.b)*frame.g - 0.5, frame.dims_temp[0] - frame.outside*frame.g - 0.5], color='black')
+        plt.plot([frame.dims_temp[1] - frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g- 0.5], [frame.outside*frame.g - 0.5, (frame.outside + frame.single_height)*frame.g - 0.5], color='black')
+        plt.plot([frame.dims_temp[1] - frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g- 0.5], [(frame.outside + frame.single_height + frame.b)*frame.g - 0.5, frame.dims_temp[0] - frame.outside*frame.g - 0.5], color='black')
     
     #plotting bees
     for b in frame.colony:
@@ -61,9 +60,9 @@ def update(frame,path,count=None):
     plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False,labeltop=False)
     plt.tick_params(axis='y', which='both', right=False, left=False, labelleft=False)
     if count is not None:
-        plt.savefig(path+'iteration_{}.png'.format(count))
+        plt.savefig(path+'iteration_{}.png'.format(count),  bbox_inches='tight')
     else:
-        plt.savefig(path+'iteration_{}.png'.format(0))
+        plt.savefig(path+'iteration_{}.png'.format(0),  bbox_inches='tight')
     #Close figure, clear everything
     plt.cla() 
     plt.clf() 

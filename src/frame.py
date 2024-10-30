@@ -2,6 +2,7 @@
 
 import numpy as np
 import random
+import configparser
 from configparser import ConfigParser
 import ast
 
@@ -25,27 +26,46 @@ class Frame:
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
         self.t_amb = cfg.getfloat('hive','t_amb')
-        self.alternative = cfg.getboolean('hotspot','Alternative')
-        self.dims_b = list(ast.literal_eval(cfg.get('Alternative1','dims_b')))
-        self.outside = cfg.getfloat('Alternative2','outside')
-        self.b = cfg.getfloat('Alternative2','b')
-        self.t = cfg.getfloat('Alternative2','t')
-        self.bee_surf = cfg.getfloat('Alternative2','bee_surf')
-        self.hotspot_space = cfg.getfloat('Alternative2','hotspot_space')
-        self.hotspot_dim = list(ast.literal_eval(cfg.get('Alternative2','hotspot_dim')))
+        self.RealisticFrame = cfg.getboolean('hotspot','RealisticFrame')
+        self.dims_b = list(ast.literal_eval(cfg.get('FreeFrame','dims_b')))
+        self.outside = cfg.getfloat('RealisticFrame','outside')
+        self.b = cfg.getfloat('RealisticFrame','b')
+        self.t = cfg.getfloat('RealisticFrame','t')
+        self.bee_surf = cfg.getfloat('RealisticFrame','bee_surf')
+        self.hotspot_space = cfg.getfloat('RealisticFrame','hotspot_space')
+        self.hotspot_dim = list(ast.literal_eval(cfg.get('RealisticFrame','hotspot_dim')))
+        self.dict_hotspot = {key: ast.literal_eval(value) for key, value in cfg['hotspot_dictionnary'].items()}
         
         #Converting cm data in pixels
-        if self.alternative:
-            self.hotspot_space = self.convert_cm_to_pixels(self.hotspot_space)
-            self.hotspot_dim[0] = self.convert_cm_to_pixels(self.hotspot_dim[0])
-            self.hotspot_dim[1] = self.convert_cm_to_pixels(self.hotspot_dim[1])
-            self.outside = self.convert_cm_to_pixels(self.outside)
-            self.b = self.convert_cm_to_pixels(self.b)
-            self.t = self.convert_cm_to_pixels(self.t)
+        if self.RealisticFrame:
+            self.hotspot_space = self.convert_cm_to_array(self.hotspot_space)
+            self.hotspot_dim[0] = self.convert_cm_to_array(self.hotspot_dim[0])
+            self.hotspot_dim[1] = self.convert_cm_to_array(self.hotspot_dim[1])
+            self.outside = self.convert_cm_to_array(self.outside)
+            self.b = self.convert_cm_to_array(self.b)
+            self.t = self.convert_cm_to_array(self.t)
         
-        if self.alternative:
+        if self.RealisticFrame:
+            #Error raising if parameters are not valid
+            if len(self.dict_hotspot) % 4 != 0:
+                raise configparser.ParsingError(f"Number of hotspot must be a multiple of 4")
+            for location in self.dict_hotspot.keys():
+                if self.dict_hotspot[location]['Temperature'] < 0 and self.dict_hotspot[location]['Temperature'] != -1:
+                    raise configparser.ParsingError(f"Negative temperature not allowed, except for -1 (hotspot off)")
+            if self.bee_surf <= 0:
+                raise configparser.ParsingError(f"Bee surface must be positive and non-zero")
+            if self.hotspot_space < 0:
+                raise configparser.ParsingError(f"Hotspot space must be positive")
+            if self.hotspot_dim[0] <= 0 or self.hotspot_dim[1] <= 0:
+                raise configparser.ParsingError(f"Hotspot dimensions must be positive and non-zero")
+            if self.outside < 0:
+                raise configparser.ParsingError(f"Outside length must be positive")
+            if self.b < 0:
+                raise configparser.ParsingError(f"b length must be positive")
+            if self.t < 0:
+                raise configparser.ParsingError(f"t length must be positive")
+            
             #Calculation of dimensions' frame
-            self.dict_hotspot = {key: ast.literal_eval(value) for key, value in cfg['hotspot_dictionnary'].items()}
             self.nb_hotspots_row = len(self.dict_hotspot)/4
             self.dims_b[1] = int(self.nb_hotspots_row*self.hotspot_dim[1] + (self.nb_hotspots_row+1)*self.hotspot_space + self.outside*2)
             self.dims_b[0] = int((2*self.hotspot_dim[0] + 3*self.hotspot_space + self.outside + self.t)*2 + self.b)
@@ -62,18 +82,18 @@ class Frame:
             self.hotspot_j = list()
             self.hot_on=False
             
-            #Hotspots initialisation for alternative 1
-            if self.alternative==False:
-                self.hotspot_on=cfg.getint('Alternative1','on')
-                self.hotspot_off=cfg.getint('Alternative1','off')
+            #Hotspots initialisation for FreeFrame
+            if self.RealisticFrame==False:
+                self.hotspot_on=cfg.getint('FreeFrame','on')
+                self.hotspot_off=cfg.getint('FreeFrame','off')
                 self.n_spot_on = 1
-                self.hotspot_i = [[int(cfg.getfloat('Alternative1','i_c')*self.dims_temp[0]-cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2),int((cfg.getfloat('Alternative1','i_c')*self.dims_temp[0]+cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
-                self.hotspot_j = [[int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1]-cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1]+cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
-                self.Tspot = cfg.getfloat('Alternative1','Tspot')
+                self.hotspot_i = [[int(cfg.getfloat('FreeFrame','i_c')*self.dims_temp[0]-cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2),int((cfg.getfloat('FreeFrame','i_c')*self.dims_temp[0]+cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('FreeFrame','j_c')*self.dims_temp[1]-cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('FreeFrame','j_c')*self.dims_temp[1]+cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2))]]
+                self.Tspot = cfg.getfloat('FreeFrame','Tspot')
                 if self.hotspot_on==0:
                     self.set_hotspot()
             
-            #Hotspots initialisation for alternative 2        
+            #Hotspots initialisation for RealisticFrame       
             else:
                 self.n_spot_on = 0
                 #Implement hotspots coordinates
@@ -99,7 +119,7 @@ class Frame:
                         self.hotspot_i.append([int(self.dict_hotspot[location]['coord_i'] - self.hotspot_dim[0]*self.g/2), int(self.dict_hotspot[location]['coord_i'] + self.hotspot_dim[0]*self.g/2)])
                         self.hotspot_j.append([int(self.dict_hotspot[location]['coord_j'] - self.hotspot_dim[1]*self.g/2), int(self.dict_hotspot[location]['coord_j'] + self.hotspot_dim[1]*self.g/2)])
                         self.Tspot = self.dict_hotspot[location]['Temperature']
-                self.set_hotspot()    
+                self.set_hotspot()  
         else:
             self.hot_used=False
             self.hot_on=False
@@ -133,7 +153,9 @@ class Frame:
 
     def init_colony(self,_n_bees,_init_shape,_bee_param):
         """Build the list of agents (Bee objects) by random draw according to param."""
-        initBeeBehaviour(_bee_param) # Initialise bee behaviour based on _bee_param
+        self.bee_xmax = self.dims_b[0]-1
+        self.bee_ymax = self.dims_b[1]-1
+        initBeeBehaviour(_bee_param, self.bee_xmax, self.bee_ymax) # Initialise bee behaviour based on _bee_param
         
         bs = []
         for _ in range(_n_bees):
@@ -150,15 +172,15 @@ class Frame:
                     j_b = int(r*np.sin(theta))+offset[1]
 
             elif _init_shape=="ring": #initially in ring in middle
-                r = 7*random.random()
+                r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                 theta = 2*np.pi*random.random()
-                i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
-                j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
+                i_b = int((r+5)*np.cos(theta))+self.dims_b[0]//2
+                j_b = int((r+5)*np.sin(theta))+self.dims_b[1]//2
                 while self.beeGrid[i_b,j_b]!=FREE:
-                    r = 10*random.random()
+                    r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                     theta = 2*np.pi*random.random()
-                    i_b = int((r+2)*np.cos(theta))+self.dims_b[0]//2
-                    j_b = int((r+2)*np.sin(theta))+self.dims_b[1]//2
+                    i_b = int((r+5)*np.cos(theta))+self.dims_b[0]//2
+                    j_b = int((r+5)*np.sin(theta))+self.dims_b[1]//2
 
             else: #random initialisation across grid
                 i_b =int(random.random()*(self.dims_b[0]))
@@ -185,23 +207,23 @@ class Frame:
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
         self.t_amb = cfg.getfloat('hive','t_amb')
-        self.alternative = cfg.getboolean('hotspot','Alternative')
-        self.dims_b = list(ast.literal_eval(cfg.get('Alternative1','dims_b')))
-        self.outside = cfg.getfloat('Alternative2','outside')
-        self.b = cfg.getfloat('Alternative2','b')
-        self.t = cfg.getfloat('Alternative2','t')
-        self.bee_surf = cfg.getfloat('Alternative2','bee_surf')
-        self.hotspot_space = cfg.getfloat('Alternative2','hotspot_space')
-        self.hotspot_dim = list(ast.literal_eval(cfg.get('Alternative2','hotspot_dim')))
+        self.RealisticFrame = cfg.getboolean('hotspot','RealisticFrame')
+        self.dims_b = list(ast.literal_eval(cfg.get('FreeFrame','dims_b')))
+        self.outside = cfg.getfloat('RealisticFrame','outside')
+        self.b = cfg.getfloat('RealisticFrame','b')
+        self.t = cfg.getfloat('RealisticFrame','t')
+        self.bee_surf = cfg.getfloat('RealisticFrame','bee_surf')
+        self.hotspot_space = cfg.getfloat('RealisticFrame','hotspot_space')
+        self.hotspot_dim = list(ast.literal_eval(cfg.get('RealisticFrame','hotspot_dim')))
         
         #Converting cm data in pixels
-        if self.alternative:
-            self.hotspot_space = self.convert_cm_to_pixels(self.hotspot_space)
-            self.hotspot_dim[0] = self.convert_cm_to_pixels(self.hotspot_dim[0])
-            self.hotspot_dim[1] = self.convert_cm_to_pixels(self.hotspot_dim[1])
-            self.outside = self.convert_cm_to_pixels(self.outside)
-            self.b = self.convert_cm_to_pixels(self.b)
-            self.t = self.convert_cm_to_pixels(self.t)
+        if self.RealisticFrame:
+            self.hotspot_space = self.convert_cm_to_array(self.hotspot_space)
+            self.hotspot_dim[0] = self.convert_cm_to_array(self.hotspot_dim[0])
+            self.hotspot_dim[1] = self.convert_cm_to_array(self.hotspot_dim[1])
+            self.outside = self.convert_cm_to_array(self.outside)
+            self.b = self.convert_cm_to_array(self.b)
+            self.t = self.convert_cm_to_array(self.t)
 
         # Hotspot initialisation
         if cfg.getboolean('hotspot','used'):
@@ -210,13 +232,13 @@ class Frame:
             self.hotspot_j = list()
             self.hot_on=False
             
-            if self.alternative==False:
-                self.hotspot_on=cfg.getint('Alternative1','on')
-                self.hotspot_off=cfg.getint('Alternative1','off')
+            if self.RealisticFrame==False:
+                self.hotspot_on=cfg.getint('FreeFrame','on')
+                self.hotspot_off=cfg.getint('FreeFrame','off')
                 self.n_spot_on = 1
-                self.hotspot_i = [[int(cfg.getfloat('Alternative1','i_c')*self.dims_temp[0] - cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2),int((cfg.getfloat('Alternative1','i_c')*self.dims_temp[0] + cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
-                self.hotspot_j = [[int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1] - cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('Alternative1','j_c')*self.dims_temp[1] + cfg.getfloat('Alternative1','sz')*self.dims_temp[0]/2))]]
-                self.Tspot = cfg.getfloat('Alternative1','Tspot')
+                self.hotspot_i = [[int(cfg.getfloat('FreeFrame','i_c')*self.dims_temp[0] - cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2),int((cfg.getfloat('FreeFrame','i_c')*self.dims_temp[0] + cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2))]]
+                self.hotspot_j = [[int((cfg.getfloat('FreeFrame','j_c')*self.dims_temp[1] - cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2)),int((cfg.getfloat('FreeFrame','j_c')*self.dims_temp[1] + cfg.getfloat('FreeFrame','sz')*self.dims_temp[0]/2))]]
+                self.Tspot = cfg.getfloat('FreeFrame','Tspot')
                 if self.hotspot_on==0:
                     self.set_hotspot()  
             else:
@@ -257,7 +279,7 @@ class Frame:
 
     def set_hotspot(self):
         """Turn on the hotspot. Sets its area to a fixed temperature."""
-        if self.alternative == False:
+        if self.RealisticFrame == False:
             self.hot_on = True
         for a,b in zip(self.hotspot_i,self.hotspot_j):
             self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
@@ -321,7 +343,7 @@ class Frame:
         """Update the Frame state. Called at each timestep.
         - count is the iteration number
         """
-        if self.alternative == False:
+        if self.RealisticFrame == False:
             if self.hot_used: # Hotspot management
                 if self.hotspot_on==count:
                     self.set_hotspot()
@@ -368,7 +390,7 @@ class Frame:
         beeTempField = self.tempField.reshape(np.shape(self.tempField)[0]//2, 2, np.shape(self.tempField)[1]//2, 2)
         self.beeTempField = beeTempField.mean(axis=(1,3))
         
-    def convert_cm_to_pixels(self, cm):
-        """Converts a distance in cm to pixels in bee grid, based on the volume taken by a bee"""
+    def convert_cm_to_array(self, cm):
+        """Converts a distance in cm to coordinates in bee grid array, based on the volume taken by a bee"""
         pixels = round(cm/np.sqrt(self.bee_surf))
         return pixels

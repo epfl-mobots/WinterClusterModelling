@@ -8,15 +8,15 @@ FREE = 0
 STAT = 1
 MOV = 2
 
-def initBeeBehaviour(_bee_param):
+def initBeeBehaviour(_bee_param, bee_xmax, bee_ymax):
     """Initialise the bee behaviour parameters from the config file given as argument."""
     Bee.TminI = float(_bee_param["TminI"])
     Bee.TmaxI = float(_bee_param["TmaxI"])
     Bee.Tcoma = float(_bee_param["Tcoma"])
 
     #limits of the terrain
-    Bee.imax = int(_bee_param['xmax'])
-    Bee.jmax = int(_bee_param['ymax'])
+    Bee.imax = bee_xmax
+    Bee.jmax = bee_ymax
     Bee.BH = _bee_param['BH']
 
     if Bee.BH == 'explorer':

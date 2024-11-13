@@ -4,6 +4,7 @@ import pickle
 from configparser import ConfigParser
 import shutil
 import draw
+import ast
 
 from frame import Frame
 
@@ -24,11 +25,21 @@ class Sim:
             cfg.read(frame_save+"/config_copy")
 
         #Create save directory for data
-        t_amb=cfg.getfloat('hive','t_amb')
+        self.dict_Tamb = {key: ast.literal_eval(value) for key, value in cfg['Tamb_dictionnary'].items()}
+        if len(self.dict_Tamb) == 1 :
+            t_amb=self.dict_Tamb['t0']['Temperature']
+        else:
+            t_amb = 'Multiple Temperatures'
         if cfg.get('bee','BH') == 'sumpter':
-            path = f'../data/{t_amb}C/sumpter/'
+            if t_amb == 'Multiple Temperatures':
+                path = f'../data/{t_amb}/sumpter/'
+            else:
+                path = f'../data/{t_amb}C/sumpter/'
         elif cfg.get('bee','BH') == 'explorer':
-            path = f'../data/{t_amb}C/explore/'
+            if t_amb == 'Multiple Temperatures':
+                path = f'../data/{t_amb}/explore/'
+            else :
+                path = f'../data/{t_amb}C/explore/'
         else:
             raise ValueError(f"Invalid bee mode: {cfg.get('bee','BH')}")
 

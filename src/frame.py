@@ -25,7 +25,7 @@ class Frame:
         self.l_air = cfg.getfloat('hive','lambda_air')
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
-        self.t_amb = cfg.getfloat('hive','t_amb')
+        self.Kp =  cfg.getfloat('hive','Kp')
         self.RealisticFrame = cfg.getboolean('hotspot','RealisticFrame')
         self.dims_b = list(ast.literal_eval(cfg.get('FreeFrame','dims_b')))
         self.outside = cfg.getfloat('RealisticFrame','outside')
@@ -35,7 +35,7 @@ class Frame:
         self.hotspot_space = cfg.getfloat('RealisticFrame','hotspot_space')
         self.hotspot_dim = list(ast.literal_eval(cfg.get('RealisticFrame','hotspot_dim')))
         self.dict_hotspot = {key: ast.literal_eval(value) for key, value in cfg['hotspot_dictionnary'].items()}
-        
+        self.dict_Tamb = {key: ast.literal_eval(value) for key, value in cfg['Tamb_dictionnary'].items()}
         #Converting cm data in pixels
         if self.RealisticFrame:
             self.hotspot_space = self.convert_cm_to_array(self.hotspot_space)
@@ -69,11 +69,12 @@ class Frame:
             self.nb_hotspots_row = len(self.dict_hotspot)/4
             self.dims_b[1] = int(self.nb_hotspots_row*self.hotspot_dim[1] + (self.nb_hotspots_row+1)*self.hotspot_space + self.outside*2)
             self.dims_b[0] = int((2*self.hotspot_dim[0] + 3*self.hotspot_space + self.outside + self.t)*2 + self.b)
-            self.single_height = int(2*self.hotspot_dim[0] + 3*self.hotspot_space + self.t)
-            
+            self.single_height = int(2*self.hotspot_dim[0] + 3*self.hotspot_space + self.t) 
+        
         #Temperature field initialisation - initially homogenous at ambient temperature
         self.dims_temp = tuple(self.g*dim for dim in self.dims_b)
-        self.tempField = self.t_amb*np.ones(self.dims_temp)
+        self.Tamb = self.dict_Tamb['t0']['Temperature']
+        self.tempField =self.Tamb*np.ones(self.dims_temp)
             
         # Hotspot initialisation
         if cfg.getboolean('hotspot','used'):
@@ -126,11 +127,11 @@ class Frame:
 
         #History of temperature field at every timestep
         self.tempField_save = [self.tempField]
-        self.beeTempField = self.t_amb*np.ones(self.dims_b) # T° field for bees
-        self.Tmax = [self.t_amb]                            # History of max T°
-        self.Tcs = [self.t_amb]                             # History of T° at centroid
+        self.beeTempField = self.Tamb*np.ones(self.dims_b) # T° field for bees
+        self.Tmax = [self.Tamb]                            # History of max T°
+        self.Tcs = [self.Tamb]                            # History of T° at centroid
         self.Tmax_j = [0]                                   # History of j coordinate of max T° position
-        self.meanT = [self.t_amb]                           # History of mean T°
+        self.meanT = [self.Tamb]                           # History of mean T°
         self.sigT = [0]                                     # History of std T°
 
         #Colony initialisation
@@ -160,23 +161,29 @@ class Frame:
         bs = []
         for _ in range(_n_bees):
             if _init_shape=="disc": #initially in disc offset from corner
-                offset = (self.dims_b[0]//2,self.dims_b[1]//4)
+                offset = (self.dims_b[0]//2,self.dims_b[1]*2//4)
+                #offset = (self.dims_b[0],self.dims_b[1])
                 r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int(r*np.cos(theta))+offset[0]
                 j_b = int(r*np.sin(theta))+offset[1]
-                while self.beeGrid[i_b,j_b]!=FREE:
+                iteration = 0
+                while i_b < 0 or j_b < 0 or i_b > self.bee_xmax or j_b > self.bee_ymax or self.beeGrid[i_b,j_b]!= FREE:
+                    iteration = iteration +1
                     r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
+                    if iteration > np.pi*r*r:
+                        r = 1.5*r
+                    if iteration > 3*np.pi*r*r/2:
+                        r = 2*r
                     theta = 2*np.pi*random.random()
                     i_b = int(r*np.cos(theta))+offset[0]
                     j_b = int(r*np.sin(theta))+offset[1]
-
             elif _init_shape=="ring": #initially in ring in middle
                 r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                 theta = 2*np.pi*random.random()
                 i_b = int((r+5)*np.cos(theta))+self.dims_b[0]//2
                 j_b = int((r+5)*np.sin(theta))+self.dims_b[1]//2
-                while self.beeGrid[i_b,j_b]!=FREE:
+                while self.beeGrid[i_b,j_b]!=FREE or i_b < 0 or j_b < 0:
                     r = int(np.sqrt(2*_n_bees//np.pi))*random.random()
                     theta = 2*np.pi*random.random()
                     i_b = int((r+5)*np.cos(theta))+self.dims_b[0]//2
@@ -206,7 +213,6 @@ class Frame:
         self.l_air = cfg.getfloat('hive','lambda_air')
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
-        self.t_amb = cfg.getfloat('hive','t_amb')
         self.RealisticFrame = cfg.getboolean('hotspot','RealisticFrame')
         self.dims_b = list(ast.literal_eval(cfg.get('FreeFrame','dims_b')))
         self.outside = cfg.getfloat('RealisticFrame','outside')
@@ -215,6 +221,7 @@ class Frame:
         self.bee_surf = cfg.getfloat('RealisticFrame','bee_surf')
         self.hotspot_space = cfg.getfloat('RealisticFrame','hotspot_space')
         self.hotspot_dim = list(ast.literal_eval(cfg.get('RealisticFrame','hotspot_dim')))
+        self.dict_Tamb = {key: ast.literal_eval(value) for key, value in cfg['Tamb_dictionnary'].items()}
         
         #Converting cm data in pixels
         if self.RealisticFrame:
@@ -272,10 +279,11 @@ class Frame:
             self.hot_used=False
             self.hot_on=False
 
-    def init_temp(self):
+    def init_temp(self, count):
         """Update the temperature field only (no agent movement)"""
         for _ in range(1000):
             self.update_temp()
+            self.update_temp_border(count)
 
     def set_hotspot(self):
         """Turn on the hotspot. Sets its area to a fixed temperature."""
@@ -338,6 +346,19 @@ class Frame:
                         continue
                 heating = self.f(i,j)
                 self.tempField[i,j] += diffusion_term[i,j] + heating
+   
+    def update_temp_border(self, count):
+        """Update the temperature field for the border of the grid."""
+        for dict_key in self.dict_Tamb.keys():
+            if self.dict_Tamb[dict_key]['beginning'] == count:
+                self.Tobj = self.dict_Tamb[dict_key]['Temperature']
+        self.Tamb += (self.Tobj - self.Tamb)*self.Kp
+        for i in range(self.dims_temp[0]):
+            self.tempField[i,0] = self.Tamb
+            self.tempField[i,-1] = self.Tamb
+        for j in range(self.dims_temp[1]):
+            self.tempField[0,j] = self.Tamb
+            self.tempField[-1,j] = self.Tamb
 
     def update(self,count):
         """Update the Frame state. Called at each timestep.
@@ -352,6 +373,8 @@ class Frame:
         else:
             if self.hot_used: # Hotspot management
                 self.set_hotspot()
+        if len(self.dict_Tamb)>1:
+            self.update_temp_border(count)
 
         # Tau temperature updates for each bee update
         Pij=(self.beeGrid)%2

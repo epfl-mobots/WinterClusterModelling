@@ -8,8 +8,8 @@ import gc
 
 from bee import FREE
 
-T_MIN_DRAW = 10
-T_MAX_DRAW = 35
+T_MIN_DRAW = 0
+T_MAX_DRAW = 30
 SIZE_BEE = 1
 
 colors=[]
@@ -25,7 +25,8 @@ def update(frame,path,count=None):
     plt.matshow(frame.tempField,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
 
     #color bar
-    plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=range(int(np.min(frame.tempField)),int(np.max(frame.tempField)+2)), boundaries=range(int(np.min(frame.tempField))-1,int(np.max(frame.tempField)+2)), label='Temperature [°C]')
+    ticks = np.arange(T_MIN_DRAW, T_MAX_DRAW, 2)
+    plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=ticks, label='Temperature [°C]')
 
     #Plotting frame
     if frame.RealisticFrame:
@@ -45,16 +46,16 @@ def update(frame,path,count=None):
     for b in frame.colony:
         if b.state=='sumpter' :
             if frame.beeGrid_2nd[b.i,b.j]!=FREE: #if there is a bee in the 2nd layer
-                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=1.5*SIZE_BEE)
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE)
             else:
-                plt.scatter(b.j*frame.g,b.i*frame.g,c='black',s=SIZE_BEE)
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=SIZE_BEE)
         elif b.state=='leave':
             if frame.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer
-                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=1.5*SIZE_BEE)
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE)
             else:
-                plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=SIZE_BEE,marker='D')
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=SIZE_BEE,marker='D')
         elif b.state=='explore':
-            plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=SIZE_BEE)
+            plt.scatter(b.j*frame.g,b.i*frame.g,c='green',s=SIZE_BEE)
 
     #remove axes ticks
     plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False,labeltop=False)

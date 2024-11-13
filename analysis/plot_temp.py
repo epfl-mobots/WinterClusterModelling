@@ -278,10 +278,10 @@ def plot_combined(srcDir, cfg):
         #plotting curve of temperature across i of bee centroid position
         ax2 = ax1.twinx() 
         ax2.set_ylabel('Temperature [°C]', color = 'blue') 
-        ax2.set_ylim((10,35))
-        ax2.plot(range(200), temp_to_plot, color = 'blue')
-        ax2.plot(range(200), min_temps, color = 'blue', linestyle='--', linewidth=0.5)
-        ax2.plot(range(200), max_temps, color = 'blue', linestyle='--', linewidth=0.5)
+        ax2.set_ylim((10,55))
+        ax2.plot(range(temp_to_plot.shape[0]), temp_to_plot, color = 'blue')
+        ax2.plot(range(temp_to_plot.shape[0]), min_temps, color = 'blue', linestyle='--', linewidth=0.5)
+        ax2.plot(range(temp_to_plot.shape[0]), max_temps, color = 'blue', linestyle='--', linewidth=0.5)
 
         # Extract Tmin and Tmax of comfort zone from bees' config file
         # Tmin = frame_save.colony[0].TminI
@@ -290,10 +290,10 @@ def plot_combined(srcDir, cfg):
         Tmax = cfg.getfloat('bee','TmaxI')
         
         #shading comfort area
-        ax2.fill_between(range(200), temp_to_plot, where=((temp_to_plot >= Tmin) & (temp_to_plot <= Tmax)), color='blue', alpha=0.3, label='Comfort zone for bees')
+        ax2.fill_between(range(temp_to_plot.shape[0]), temp_to_plot, where=((temp_to_plot >= Tmin) & (temp_to_plot <= Tmax)), color='blue', alpha=0.3, label='Comfort zone for bees')
 
 
-        ax1.bar(range(0,200,2), 2*per_col, color = 'red') 
+        ax1.bar(range(0,temp_to_plot.shape[0],2), 2*per_col, color = 'red') 
         plt.savefig(outDir+"/it_{}.png".format(iteration))
 
         # Close figure, clear everything

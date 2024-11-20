@@ -137,6 +137,7 @@ class Frame:
         #Colony initialisation
         self.n_bees = cfg.getint('hive','n_bees')
         self.beeGrid = np.zeros(self.dims_b)                # Grid of bees
+        self.beeGrid_thermo = np.full(self.dims_b, False)      
         self.colony = np.asarray(self.init_colony(self.n_bees,cfg.get('hive','init_shape'),cfg['bee'])) #List of bees
         if self.n_bees>0:
             self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
@@ -147,9 +148,6 @@ class Frame:
         #2nd layer of beeGrid for bees in 'leave' state
         self.beeGrid_2nd = np.zeros(self.dims_b)
         self.bgs2_save = [self.beeGrid_2nd.copy()]
-
-        #initial stage where only the temperature dynamics are active (no agent movement)
-        #self.init_temp()
 
 
     def init_colony(self,_n_bees,_init_shape,_bee_param):
@@ -297,6 +295,8 @@ class Frame:
         Returns 0 if no agent is at this position.
         """
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
+        if self.beeGrid_thermo[i//self.g,j//self.g]:
+            f_ij = 5*f_ij   
         return f_ij
     
     def diff(self, lamdas):
@@ -393,7 +393,7 @@ class Frame:
         idxs = np.arange(self.colony.size)
         np.random.shuffle(idxs)
         for i in idxs:
-            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd)
+            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd, self.beeGrid_thermo)
         
         #Saving state
         if self.n_bees>0:

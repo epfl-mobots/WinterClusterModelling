@@ -32,8 +32,10 @@ def update(frame,path,count=None):
     for b in frame.colony:
         if b.state=='sumpter' :
             if frame.beeGrid_2nd[b.i,b.j]!=FREE: #if there is a bee in the 2nd layer
-                plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE, zorder=3)
+                plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE, zorder=4)
             else:
+                if b.thermogenesis == True:
+                    plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE, zorder=4)
                 plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=SIZE_BEE, zorder=3)
         elif b.state=='leave':
             if frame.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer

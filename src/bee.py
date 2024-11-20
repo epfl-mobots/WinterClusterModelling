@@ -17,12 +17,19 @@ def initBeeBehaviour(_bee_param, bee_xmax, bee_ymax):
     #limits of the terrain
     Bee.imax = bee_xmax
     Bee.jmax = bee_ymax
+    
     Bee.BH = _bee_param['BH']
 
     if Bee.BH == 'explorer':
         Bee.trans_mode = _bee_param['trans_mode']
         Bee.prob_tr = float(_bee_param['alpha'])
         Bee.max_bounce = int(_bee_param['max_bounce'])
+        
+    Bee.Thermogenese = bool(_bee_param["Thermogenese"])
+    if Bee.Thermogenese == True :
+        Bee.prob_activate = float(_bee_param['alpha_activate'])
+        Bee.prob_deactivate = float(_bee_param['alpha_deactivate'])
+        Bee.iter_activate = float(_bee_param['iter_activate'])
 
 class Bee:
     """Class describing the bee agent."""
@@ -38,6 +45,9 @@ class Bee:
         self.j = y
 
         self.state = 'sumpter' #initial state for both sumpter and explorer BH
+        self.thermogenesis = False #initially no thermogenesis
+        self.thermo_iter = 0
+        
         if Bee.BH == 'explorer':
             self.direction = np.array([0,0])
             self.bounced = 0
@@ -94,8 +104,28 @@ class Bee:
             return Bee.prob_tr/(1+math.exp(-0.5*(temp-self.TminI)))
         else:
             return Bee.prob_tr
+    
+    def compute_thermogenesis(self, xy_free, xy_TI, beeGrid_thermo):
+        if self.thermogenesis == False:
+            # Select bees inside the core
+            if len(xy_free)+len(xy_TI)<=1:
+                #random draw with a probability prob_activate to actiavte thermogenesis
+                active = np.random.choice([True,False],p=[self.prob_activate,1-self.prob_activate])
+                if active:
+                    self.thermogenesis = True
+                    beeGrid_thermo[self.i,self.j] = True
+                
+        if self.thermogenesis == True:
+            self.thermo_iter = self.thermo_iter + 1
+            if self.thermo_iter >= self.iter_activate:
+                #random draw with a probability prob_deactivate to deactivate thermogenesis
+                deactive = np.random.choice([True,False],p=[self.prob_deactivate,1-self.prob_deactivate])
+                if deactive:
+                    self.thermogenesis = False
+                    beeGrid_thermo[self.i,self.j] = False
+                    self.thermo_iter = 0
 
-    def update(self,tempField,beeGrid,beeGrid_2nd):
+    def update(self,tempField,beeGrid,beeGrid_2nd, beeGrid_thermo):
         """Update of the agent state and position."""
         if tempField[self.i,self.j]<self.Tcoma:
             return
@@ -172,6 +202,9 @@ class Bee:
                     if temp_free[idx]!=tempField[self.i,self.j]:
                         self.i = xy_free[idx][0]
                         self.j = xy_free[idx][1]
+            
+            if Bee.Thermogenese == True:
+                self.compute_thermogenesis(xy_free,xy_TI, beeGrid_thermo)
             
             # update beeGrid with the new position (and if bee is static or moved)
             if self.i==init_pos[0] and self.j==init_pos[1]:

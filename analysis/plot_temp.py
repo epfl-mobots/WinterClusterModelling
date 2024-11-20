@@ -248,7 +248,6 @@ def plot_combined(srcDir, cfg):
 
     bg = frame_save.bgs_save 
     bg_2 = frame_save.bgs2_save
-    print(np.sum(bg[0]))
     #bg = np.array(bg[1:]) # Not sure why this was done
     temp_field = np.array(frame_save.tempField_save)
     
@@ -278,7 +277,7 @@ def plot_combined(srcDir, cfg):
         #plotting curve of temperature across i of bee centroid position
         ax2 = ax1.twinx() 
         ax2.set_ylabel('Temperature [°C]', color = 'blue') 
-        ax2.set_ylim((10,55))
+        ax2.set_ylim((0,35))
         ax2.plot(range(temp_to_plot.shape[0]), temp_to_plot, color = 'blue')
         ax2.plot(range(temp_to_plot.shape[0]), min_temps, color = 'blue', linestyle='--', linewidth=0.5)
         ax2.plot(range(temp_to_plot.shape[0]), max_temps, color = 'blue', linestyle='--', linewidth=0.5)

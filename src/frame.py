@@ -309,7 +309,6 @@ class Frame:
         tempfield_isup, tempfield_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         tempfield_jsup, tempfield_jinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         #calculate lamda matrix in dimension of temperature grid
-        lamdas_aug = np.zeros(self.dims_temp)
         for i in range(self.dims_temp[0]):
             lamdas_row = np.repeat(lamdas[i//2, :], 2)
             lamdas_aug[i:i+1, :] = lamdas_row
@@ -342,7 +341,7 @@ class Frame:
                 if self.hot_on:
                     hotspot= self.h(i,j)
                     if hotspot!= -1:
-                        j=self.hotspot_j[hotspot][1] - 1 #Skips all other pixels on the hotspot
+                        j=self.hotspot_j[hotspot][1] - 1 #Skips all other pixels on the hotspot row
                         continue
                 heating = self.f(i,j)
                 self.tempField[i,j] += diffusion_term[i,j] + heating
@@ -377,7 +376,7 @@ class Frame:
             self.update_temp_border(count)
 
         # Tau temperature updates for each bee update
-        Pij=(self.beeGrid)%2
+        Pij=(self.beeGrid)%2 # Pij = 1 if a beespot is STAT, 0 if a beespot is FREE or MOV
         lamdas=self.l_air-Pij*(self.l_air-self.l_bee)
         for _ in range(self.tau):
             self.update_temp(lamdas)

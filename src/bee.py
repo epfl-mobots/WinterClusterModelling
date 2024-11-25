@@ -97,7 +97,7 @@ class Bee:
 
     def update(self,tempField,beeGrid,beeGrid_2nd):
         """Update of the agent state and position."""
-        if tempField[self.i,self.j]<self.Tcoma:
+        if tempField[self.i,self.j]<Bee.Tcoma:
             return
         
         init_pos = np.array([self.i,self.j])
@@ -213,6 +213,3 @@ class Bee:
                 beeGrid_2nd[self.i,self.j]=STAT
             else:
                 beeGrid_2nd[self.i,self.j]=MOV
-        
-            
-

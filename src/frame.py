@@ -17,6 +17,12 @@ class Frame:
         """
         cfg = ConfigParser()
         cfg.read(cfg_path)
+        
+        #Initiate test variables
+        self.test = 0
+        self.i_test = -1
+        self.j_test = -1
+        self.count_test = -1
 
         #Store basic parameters:
         self.tau = cfg.getint('hive','tau')
@@ -132,7 +138,11 @@ class Frame:
         self.Tcs = [self.Tamb]                            # History of T° at centroid
         self.Tmax_j = [0]                                   # History of j coordinate of max T° position
         self.meanT = [self.Tamb]                           # History of mean T°
-        self.sigT = [0]                                     # History of std T°
+        self.sigT = [0] # History of std T°
+        self.Temp_test = []
+        self.diff_test = []
+        self.heatingtest = []
+        self.iterations = []
 
         #Colony initialisation
         self.n_bees = cfg.getint('hive','n_bees')
@@ -334,9 +344,12 @@ class Frame:
                 return n
         return -1
     
-    def update_temp(self,lamdas):
+    def update_temp(self,lamdas, count):
         """Update the temperature field."""
         diffusion_term = self.diff(lamdas)
+        if self.i_test != -1 and self.j_test != -1:
+            self.diffusion_test = diffusion_term[self.i_test, self.j_test]
+        
         for i in range(1,self.dims_temp[0] - 1): # Exclude borders because initial condition
             for j in range(1,self.dims_temp[1] - 1):
                 if self.hot_on:
@@ -345,8 +358,17 @@ class Frame:
                         j=self.hotspot_j[hotspot][1] - 1 #Skips all other pixels on the hotspot
                         continue
                 heating = self.f(i,j)
+                if i == self.i_test and j == self.j_test:
+                    self.heating_ijtest = heating
                 self.tempField[i,j] += diffusion_term[i,j] + heating
-   
+                if self.test == 0 and self.i_test ==-1 and self.j_test == -1 and self.tempField[i,j] > 50:
+                    self.i_test = i
+                    self.j_test = j
+                    self.test = self.test+1
+                    self.count_test = count
+                    self.diffusion_test = diffusion_term[self.i_test, self.j_test]
+                    self.heating_ijtest = heating
+  
     def update_temp_border(self, count):
         """Update the temperature field for the border of the grid."""
         for dict_key in self.dict_Tamb.keys():
@@ -380,7 +402,7 @@ class Frame:
         Pij=(self.beeGrid)%2
         lamdas=self.l_air-Pij*(self.l_air-self.l_bee)
         for _ in range(self.tau):
-            self.update_temp(lamdas)
+            self.update_temp(lamdas, count)
         
         # Update measurements of temp history
         self.Tmax.append(np.amax(self.tempField))
@@ -404,6 +426,11 @@ class Frame:
         self.tempField_save.append(self.tempField.copy())
         self.bgs_save.append(self.beeGrid.copy())
         self.bgs2_save.append(self.beeGrid_2nd.copy())
+        if self.test != 0:
+            self.Temp_test.append(self.tempField[self.i_test,self.j_test].copy())
+            self.diff_test.append(self.diffusion_test.copy())
+            self.heatingtest.append(self.heating_ijtest.copy())
+            self.iterations.append(count)
         
     
     def compute_Tbee(self):

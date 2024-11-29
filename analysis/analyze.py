@@ -6,11 +6,11 @@ import os
 import glob
 from configparser import ConfigParser
 
-from plot_temp import plot_temperature, plot_combined, plot_bee_distrib, plot_combined_hive
+from plot_temp import plot_combined, plot_test
 
 #Replace with desired path
 data_path = "../data/"
-dir_path = "12.0C/sumpter/2024-09-30T12_36_00/it_106/"
+dir_path = "10C/sumpter/2024-11-22T11_32_58/it_797/"
 
 dir = data_path+dir_path
 
@@ -22,5 +22,6 @@ cfg_path = glob.glob(dir+"../config*")[0]
 # Open the associated config file
 cfg = ConfigParser()
 cfg.read(cfg_path)
-plot_combined(dir,cfg)
+#plot_combined(dir,cfg)
+plot_test(dir,cfg)
     

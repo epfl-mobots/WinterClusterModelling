@@ -300,3 +300,39 @@ def plot_combined(srcDir, cfg):
         plt.clf() 
         plt.close('all')   
         gc.collect()
+
+def plot_test(srcDir, cfg):
+    """Function to plot the diffusion, bee's heating and temperature stored 
+        for a particular position in the temperature field during 
+        several iterations in the frame object
+    """
+    if not os.path.isdir(srcDir+"/analysis"):
+        os.mkdir(srcDir+"/analysis")
+
+    # Get the frame saved during the simulation
+    f = open(srcDir+"/frame.obj", "rb")
+    frame_save = pickle.load(f)
+    f.close()
+
+    tempfield = frame_save.Temp_test 
+    diffusion = frame_save.diff_test
+    heating = frame_save.heatingtest
+    iterations = frame_save.iterations
+    
+    if not os.path.isdir(srcDir+"/analysis/test"):
+        os.mkdir(srcDir+"/analysis/test")
+    outDir = srcDir+"/analysis/test"
+    
+    # Plot of diffusion, bee's heating and temperature field in function of iterations
+    plt.figure(figsize=(13, 9))
+    plt.plot(iterations, np.abs(diffusion), label='Diffusion (Absolute Value)[°C]')
+    plt.plot(iterations, heating, label='Passive Bee Heating [°C]')
+    plt.plot(iterations, tempfield, label='Field Temperature [°C]')
+    plt.yscale('log')
+    plt.xlabel('Iterations', fontsize=13)
+    plt.ylabel('Temperature [°C]', fontsize=13)
+    plt.legend(fontsize=13)
+    plt.title('Diffusion, Passive Bee Heating and Field Temperature in function of iterations using a logaritmic scale', fontsize=15)
+    
+    
+    plt.savefig(outDir+"/test.png")

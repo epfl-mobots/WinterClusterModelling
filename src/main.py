@@ -48,6 +48,8 @@ if __name__ == "__main__":
         sim.update()
         if i%save_freq==0:
             sim.save()
+        if i > sim.frame.count_test and sim.frame.count_test != -1:
+            sim.save()
         
     sim.end()
     print(f"Simulation finished.")

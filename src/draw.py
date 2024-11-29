@@ -9,7 +9,7 @@ import gc
 from bee import FREE
 
 T_MIN_DRAW = 0
-T_MAX_DRAW = 30
+T_MAX_DRAW = 1000
 SIZE_BEE = 1
 
 colors=[]
@@ -22,10 +22,11 @@ cmap_temp = LinearSegmentedColormap.from_list("mycmap", colors)
 def update(frame,path,count=None):
     """Draw the simulation state described by frame and save image in path"""
     #plotting temperatures as background
-    plt.matshow(frame.tempField,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
+    plt.matshow(frame.tempField,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax = np.max(frame.tempField)))
 
     #color bar
-    ticks = np.arange(T_MIN_DRAW, T_MAX_DRAW, 2)
+    max = (int(np.max(frame.tempField) / 10 ) + 1 ) * 10
+    ticks = np.arange(T_MIN_DRAW, max, max/10)
     plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=ticks, label=f'Temperature [°C]         (Ambient={frame.tempField[0][0]}°C)')
     
     #plotting bees
@@ -57,6 +58,9 @@ def update(frame,path,count=None):
         plt.plot([frame.outside*frame.g - 0.5, frame.outside*frame.g- 0.5], [(frame.outside + frame.single_height + frame.b)*frame.g - 0.5, frame.dims_temp[0] - frame.outside*frame.g - 0.5], color='black')
         plt.plot([frame.dims_temp[1] - frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g- 0.5], [frame.outside*frame.g - 0.5, (frame.outside + frame.single_height)*frame.g - 0.5], color='black')
         plt.plot([frame.dims_temp[1] - frame.outside*frame.g - 0.5, frame.dims_temp[1] - frame.outside*frame.g- 0.5], [(frame.outside + frame.single_height + frame.b)*frame.g - 0.5, frame.dims_temp[0] - frame.outside*frame.g - 0.5], color='black')
+        # Plot the point studied in the analyze function
+        if frame.i_test >0 and frame.j_test >0:
+            plt.scatter(frame.j_test, frame.i_test, c='red', s=SIZE_BEE*1.5, zorder=5)
     
     
     #remove axes ticks

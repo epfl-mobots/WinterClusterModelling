@@ -50,6 +50,7 @@ class Sim:
         if not os.path.isdir(path+todaystr):
             os.makedirs(path+todaystr)
             os.makedirs(path+todaystr+"/graphics")
+            os.makedirs(path+todaystr+"/test")
 
         # Save parameters as a cfg file in the data directory
         shutil.copyfile(cfg_path, self.savepath+"config_copy")
@@ -92,7 +93,9 @@ class Sim:
         self.count+=1
         if self.draw_on and self.count%self.draw_t==0:
             draw.update(self.frame,self.savegraphpath,self.count)
-    
+        if self.count > self.frame.count_test and self.frame.count_test != -1:
+            self.pathtest = self.savepath+"test/"
+            draw.update(self.frame,self.pathtest, self.count)
     def end(self):
         self.save()
         return

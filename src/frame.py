@@ -137,7 +137,7 @@ class Frame:
         #Colony initialisation
         self.n_bees = cfg.getint('hive','n_bees')
         self.beeGrid = np.zeros(self.dims_b)                # Grid of bees
-        self.beeGrid_thermo = np.full(self.dims_b, False)      
+        self.beeGrid_thermo = np.full(self.dims_b, 0)      
         self.colony = np.asarray(self.init_colony(self.n_bees,cfg.get('hive','init_shape'),cfg['bee'])) #List of bees
         if self.n_bees>0:
             self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
@@ -295,8 +295,8 @@ class Frame:
         Returns 0 if no agent is at this position.
         """
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
-        if self.beeGrid_thermo[i//self.g,j//self.g]:
-            f_ij = 5*f_ij   
+        if self.beeGrid_thermo[i//self.g,j//self.g] != 0:
+            f_ij = self.beeGrid_thermo[i//self.g,j//self.g]  
         return f_ij
     
     def diff(self, lamdas):

@@ -1,6 +1,7 @@
 """Defines the Bee class (agent class)."""
 
 import numpy as np
+import ast
 import math
 
 # constants describing the beeGrid state
@@ -27,7 +28,8 @@ def initBeeBehaviour(_bee_param, bee_xmax, bee_ymax):
         
     Bee.Thermogenese = bool(_bee_param["Thermogenese"])
     if Bee.Thermogenese == True :
-        Bee.prob_activate = float(_bee_param['alpha_activate'])
+        Bee.activate_params = list(ast.literal_eval(_bee_param["activate_params"]))
+        Bee.proba_temp_params = list(ast.literal_eval(_bee_param["proba_temp_params"]))
         Bee.prob_deactivate = float(_bee_param['alpha_deactivate'])
         Bee.iter_activate = float(_bee_param['iter_activate'])
 
@@ -105,15 +107,39 @@ class Bee:
         else:
             return Bee.prob_tr
     
-    def compute_thermogenesis(self, xy_free, xy_TI, beeGrid_thermo):
+    def compute_prob_activate(self, tempField):
+        """Compute the probability for a bee to begin shivering based on the ratio
+        between the local temperature and the maximum temperature in the field.
+        """
+        ratio_temp = tempField[self.i,self.j]/np.max(tempField)
+        proba_activate = Bee.activate_params[0]*np.exp(Bee.activate_params[1]*ratio_temp)
+        return proba_activate/100
+    
+    def compute_activate_temp(self):
+        """Compute the shivering temperature based on a probability distribution 
+        approximating the shivering presented in Stabentheiner 2003.
+        Method inspired from: https://stackoverflow.com/questions/66874819/random-numbers-with-user-defined-continuous-probability-distribution 
+        """
+        
+        temp = np.random.uniform(0.5,9)
+        y = np.random.uniform(0,0.0005)
+        proba_temp = Bee.proba_temp_params[0]*np.exp(Bee.proba_temp_params[1]*temp)
+        while y>proba_temp:
+            temp = np.random.uniform(0.5,9)
+            y = np.random.uniform(0,0.0005)
+            proba_temp = Bee.proba_temp_params[0]*np.exp(Bee.proba_temp_params[1]*temp)
+        return temp
+        
+    
+    def compute_thermogenesis(self, xy_free, xy_TI, beeGrid_thermo, tempField):
         if self.thermogenesis == False:
-            # Select bees inside the core
-            if len(xy_free)+len(xy_TI)<=1:
-                #random draw with a probability prob_activate to actiavte thermogenesis
-                active = np.random.choice([True,False],p=[self.prob_activate,1-self.prob_activate])
-                if active:
-                    self.thermogenesis = True
-                    beeGrid_thermo[self.i,self.j] = True
+            #random draw with a probability prob_activate to actiavte thermogenesis
+            self.proba_activate = self.compute_prob_activate(tempField)
+            active = np.random.choice([True,False],p=[self.proba_activate,1-self.proba_activate])
+            if active:
+                self.thermogenesis = True
+                self.activate_temp = self.compute_activate_temp()
+                beeGrid_thermo[self.i,self.j] = self.activate_temp
                 
         if self.thermogenesis == True:
             self.thermo_iter = self.thermo_iter + 1
@@ -122,7 +148,7 @@ class Bee:
                 deactive = np.random.choice([True,False],p=[self.prob_deactivate,1-self.prob_deactivate])
                 if deactive:
                     self.thermogenesis = False
-                    beeGrid_thermo[self.i,self.j] = False
+                    beeGrid_thermo[self.i,self.j] = 0
                     self.thermo_iter = 0
 
     def update(self,tempField,beeGrid,beeGrid_2nd, beeGrid_thermo):
@@ -204,7 +230,7 @@ class Bee:
                         self.j = xy_free[idx][1]
             
             if Bee.Thermogenese == True:
-                self.compute_thermogenesis(xy_free,xy_TI, beeGrid_thermo)
+                self.compute_thermogenesis(xy_free,xy_TI, beeGrid_thermo, tempField)
             
             # update beeGrid with the new position (and if bee is static or moved)
             if self.i==init_pos[0] and self.j==init_pos[1]:

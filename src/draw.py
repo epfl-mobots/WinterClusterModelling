@@ -22,11 +22,12 @@ cmap_temp = LinearSegmentedColormap.from_list("mycmap", colors)
 def update(frame,path,count=None):
     """Draw the simulation state described by frame and save image in path"""
     #plotting temperatures as background
-    plt.matshow(frame.tempField,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=T_MAX_DRAW))
+    plt.matshow(frame.tempField,cmap='viridis',aspect='equal',interpolation='none',origin='lower',norm=matplotlib.colors.Normalize(vmin=T_MIN_DRAW,vmax=np.max(frame.tempField)))
 
     #color bar
-    ticks = np.arange(T_MIN_DRAW, T_MAX_DRAW, 2)
-    plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=ticks, label=f'Temperature [°C]         (Ambient={frame.tempField[0][0]}°C)')
+    max = (int(np.max(frame.tempField) / 10 ) + 1 ) * 10
+    ticks = np.arange(T_MIN_DRAW, max, max/10)
+    plt.colorbar(location='top',shrink=0.8,spacing='proportional',ticks=ticks, label=f'Temperature [°C]         (Max={np.round(np.max(frame.tempField))}°C)')
     
     #plotting bees
     for b in frame.colony:
@@ -35,7 +36,17 @@ def update(frame,path,count=None):
                 plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE, zorder=4)
             else:
                 if b.thermogenesis == True:
-                    plt.scatter(b.j*frame.g,b.i*frame.g,c='red',s=1.5*SIZE_BEE, zorder=4)
+                    if 0<b.activate_temp<1:
+                        plt.scatter(b.j*frame.g,b.i*frame.g,c='#FF2400',s=2*SIZE_BEE, zorder=4)
+                    if 1<=b.activate_temp<2:
+                        plt.scatter(b.j*frame.g,b.i*frame.g,c='#FF0000',s=2*SIZE_BEE, zorder=4)
+                    if 2<=b.activate_temp<3:
+                        plt.scatter(b.j*frame.g,b.i*frame.g,c='#A52A2A',s=2*SIZE_BEE, zorder=4)
+                    if 3<=b.activate_temp<4:
+                        plt.scatter(b.j*frame.g,b.i*frame.g,c='#800000',s=2*SIZE_BEE, zorder=4)
+                    if 4<=b.activate_temp:
+                        plt.scatter(b.j*frame.g,b.i*frame.g,c='#4A0404',s=2*SIZE_BEE, zorder=4)
+                        
                 plt.scatter(b.j*frame.g,b.i*frame.g,c='orange',s=SIZE_BEE, zorder=3)
         elif b.state=='leave':
             if frame.beeGrid[b.i,b.j]!=FREE: #if there is a bee in the first layer

@@ -295,9 +295,13 @@ class Frame:
         Returns 0 if no agent is at this position.
         """
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
+        max_temp = 50
         if self.beeGrid_thermo[i//self.g,j//self.g] != 0:
             f_ij = self.beeGrid_thermo[i//self.g,j//self.g]  
-        return f_ij
+        if f_ij > self.hq20*np.exp(self.gamma*(max_temp-20)):
+            return(self.hq20*np.exp(self.gamma*(max_temp-20)))
+        else :
+            return f_ij
     
     def diff(self, lamdas):
         """Compute the diffusion term in the temperature equation for position (i,j).

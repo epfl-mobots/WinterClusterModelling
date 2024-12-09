@@ -113,7 +113,7 @@ class Bee:
         """
         ratio_temp = tempField[self.i,self.j]/np.max(tempField)
         proba_activate = Bee.activate_params[0]*np.exp(Bee.activate_params[1]*ratio_temp)
-        return proba_activate/100
+        return proba_activate
     
     def compute_activate_temp(self):
         """Compute the shivering temperature based on a probability distribution 
@@ -139,9 +139,10 @@ class Bee:
             if active:
                 self.thermogenesis = True
                 self.activate_temp = self.compute_activate_temp()
-                beeGrid_thermo[self.i,self.j] = self.activate_temp
+                beeGrid_thermo[self.i,self.j] = self.activate_temp + tempField[self.i,self.j]
                 
         if self.thermogenesis == True:
+            beeGrid_thermo[self.i,self.j] = self.activate_temp + tempField[self.i,self.j]
             self.thermo_iter = self.thermo_iter + 1
             if self.thermo_iter >= self.iter_activate:
                 #random draw with a probability prob_deactivate to deactivate thermogenesis
@@ -192,6 +193,7 @@ class Bee:
         ## ACTIONS according to state
         if self.state == 'sumpter':
             beeGrid[self.i,self.j]=FREE
+            beeGrid_thermo[self.i,self.j] = 0
 
             xy_TI = [] # positions within reachable range that are within [TminI;TmaxI]
             xy_free = [] # other positions within reachable range

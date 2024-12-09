@@ -36,6 +36,8 @@ class Frame:
         self.hotspot_dim = list(ast.literal_eval(cfg.get('RealisticFrame','hotspot_dim')))
         self.dict_hotspot = {key: ast.literal_eval(value) for key, value in cfg['hotspot_dictionnary'].items()}
         self.dict_Tamb = {key: ast.literal_eval(value) for key, value in cfg['Tamb_dictionnary'].items()}
+        self.max_temp = cfg.getfloat('hive','max_temp')
+        
         #Converting cm data in pixels
         if self.RealisticFrame:
             self.hotspot_space = self.convert_cm_to_array(self.hotspot_space)
@@ -290,18 +292,22 @@ class Frame:
         for a,b in zip(self.hotspot_i,self.hotspot_j):
             self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
                     
-    def f(self,i,j):
+    def f(self,i,j, diffusion):
         """Compute the metabolic temperature contribution of the agent at position (i,j).
         Returns 0 if no agent is at this position.
         """
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
-        max_temp = 50
-        if self.beeGrid_thermo[i//self.g,j//self.g] != 0:
-            f_ij = self.beeGrid_thermo[i//self.g,j//self.g]  
-        if f_ij > self.hq20*np.exp(self.gamma*(max_temp-20)):
-            return(self.hq20*np.exp(self.gamma*(max_temp-20)))
-        else :
-            return f_ij
+        shivering = False
+        test_diff = diffusion + self.tempField[i,j] + f_ij
+        
+        if self.beeGrid_thermo[i//self.g,j//self.g] != 0 and test_diff<self.beeGrid_thermo[i//self.g,j//self.g]:
+            f_ij = self.beeGrid_thermo[i//self.g,j//self.g]
+            shivering = True
+            
+        #Threshold only without shivering
+        #elif f_ij > self.hq20*np.exp(self.gamma*(self.max_temp-20)):
+            #f_ij= self.hq20*np.exp(self.gamma*(self.max_temp-20))   
+        return f_ij, shivering
     
     def diff(self, lamdas):
         """Compute the diffusion term in the temperature equation for position (i,j).
@@ -347,8 +353,11 @@ class Frame:
                     if hotspot!= -1:
                         j=self.hotspot_j[hotspot][1] - 1 #Skips all other pixels on the hotspot row
                         continue
-                heating = self.f(i,j)
-                self.tempField[i,j] += diffusion_term[i,j] + heating
+                heating, shivering = self.f(i,j, diffusion_term[i,j])
+                if shivering == True:
+                    self.tempField[i,j] = heating
+                else:
+                    self.tempField[i,j] += diffusion_term[i,j] + heating
    
     def update_temp_border(self, count):
         """Update the temperature field for the border of the grid."""

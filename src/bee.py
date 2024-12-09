@@ -107,13 +107,15 @@ class Bee:
         else:
             return Bee.prob_tr
     
-    def compute_prob_activate(self, tempField):
+    def compute_prob_activate(self, tempField, beeGrid_thermo, n_bees):
         """Compute the probability for a bee to begin shivering based on the ratio
         between the local temperature and the maximum temperature in the field.
         """
         ratio_temp = tempField[self.i,self.j]/np.max(tempField)
         proba_activate = Bee.activate_params[0]*np.exp(Bee.activate_params[1]*ratio_temp)
-        return proba_activate
+        nb_active_bees = np.count_nonzero(beeGrid_thermo)
+        passive_proportion = (n_bees-nb_active_bees)/n_bees
+        return proba_activate*passive_proportion
     
     def compute_activate_temp(self):
         """Compute the shivering temperature based on a probability distribution 
@@ -131,10 +133,10 @@ class Bee:
         return temp
         
     
-    def compute_thermogenesis(self, xy_free, xy_TI, beeGrid_thermo, tempField):
+    def compute_thermogenesis(self, beeGrid_thermo, tempField, n_bees):
         if self.thermogenesis == False:
             #random draw with a probability prob_activate to actiavte thermogenesis
-            self.proba_activate = self.compute_prob_activate(tempField)
+            self.proba_activate = self.compute_prob_activate(tempField, beeGrid_thermo, n_bees)
             active = np.random.choice([True,False],p=[self.proba_activate,1-self.proba_activate])
             if active:
                 self.thermogenesis = True
@@ -152,7 +154,7 @@ class Bee:
                     beeGrid_thermo[self.i,self.j] = 0
                     self.thermo_iter = 0
 
-    def update(self,tempField,beeGrid,beeGrid_2nd, beeGrid_thermo):
+    def update(self,tempField,beeGrid,beeGrid_2nd, beeGrid_thermo, n_bees):
         """Update of the agent state and position."""
         if tempField[self.i,self.j]<Bee.Tcoma:
             return
@@ -232,7 +234,7 @@ class Bee:
                         self.j = xy_free[idx][1]
             
             if Bee.Thermogenese == True:
-                self.compute_thermogenesis(xy_free,xy_TI, beeGrid_thermo, tempField)
+                self.compute_thermogenesis(beeGrid_thermo, tempField, n_bees)
             
             # update beeGrid with the new position (and if bee is static or moved)
             if self.i==init_pos[0] and self.j==init_pos[1]:

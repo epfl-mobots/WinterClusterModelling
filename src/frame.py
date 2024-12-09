@@ -333,8 +333,10 @@ class Frame:
         tempfield_jinf = np.roll(self.tempField, -1, axis=1) - self.tempField
         
         neighbors = np.multiply(lambdas_isup, tempfield_isup) + np.multiply(lambdas_iinf, tempfield_iinf) + np.multiply(lambdas_jsup, tempfield_jsup) + np.multiply(lambdas_jinf, tempfield_jinf)
-        d = np.multiply(lamdas_aug, neighbors)/4
-        return d 
+        d_3D= (2/500*self.l_air)*(self.Tamb-self.tempField)
+        neighbors = neighbors + d_3D
+        d = np.multiply(lamdas_aug, neighbors)
+        return d/5
 
     def h(self,i,j):
         """Checks whether position (i,j) is within the boundaries of the hotspot."""
@@ -405,7 +407,7 @@ class Frame:
         idxs = np.arange(self.colony.size)
         np.random.shuffle(idxs)
         for i in idxs:
-            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd, self.beeGrid_thermo)
+            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd, self.beeGrid_thermo, self.n_bees)
         
         #Saving state
         if self.n_bees>0:

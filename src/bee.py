@@ -108,14 +108,20 @@ class Bee:
             return Bee.prob_tr
     
     def compute_prob_activate(self, tempField, beeGrid_thermo, n_bees):
-        """Compute the probability for a bee to begin shivering based on the ratio
-        between the local temperature and the maximum temperature in the field.
-        """
-        ratio_temp = tempField[self.i,self.j]/np.max(tempField)
+        """Compute the probability of an agent starting thermogenesis shivering based on the ratio
+        between its local temperature and the maximum temperature inside the field."""
+        if np.max(tempField) == tempField[0,0] or abs(tempField[self.i,self.j]-tempField[0,0])<10^(-10):
+            ratio_temp = 0
+        else:
+            ratio_temp = (tempField[self.i,self.j] - tempField[0,0])/(np.max(tempField)-tempField[0,0])
+
         proba_activate = Bee.activate_params[0]*np.exp(Bee.activate_params[1]*ratio_temp)
-        nb_active_bees = np.count_nonzero(beeGrid_thermo)
-        passive_proportion = (n_bees-nb_active_bees)/n_bees
-        return proba_activate*passive_proportion
+        
+        # Set NAN exceptions to zeros
+        if math.isnan(proba_activate):
+            proba_activate = 0
+
+        return proba_activate
     
     def compute_activate_temp(self):
         """Compute the shivering temperature based on a probability distribution 
@@ -124,7 +130,7 @@ class Bee:
         """
         
         temp = np.random.uniform(0.5,9)
-        y = np.random.uniform(0,0.0005)
+        y = np.random.uniform(0,0.5)
         proba_temp = Bee.proba_temp_params[0]*np.exp(Bee.proba_temp_params[1]*temp)
         while y>proba_temp:
             temp = np.random.uniform(0.5,9)
@@ -134,26 +140,30 @@ class Bee:
         
     
     def compute_thermogenesis(self, beeGrid_thermo, tempField, n_bees):
+        """ Update of the agent thermogenesis state."""    
         if self.thermogenesis == False:
-            #random draw with a probability prob_activate to actiavte thermogenesis
             self.proba_activate = self.compute_prob_activate(tempField, beeGrid_thermo, n_bees)
+            #Random draw with a probability proba_activate to enter thermogenesis state
             active = np.random.choice([True,False],p=[self.proba_activate,1-self.proba_activate])
             if active:
+                # Agent enters in thermogenesis (active) state.
                 self.thermogenesis = True
-                self.activate_temp = self.compute_activate_temp()
-                beeGrid_thermo[self.i,self.j] = self.activate_temp + tempField[self.i,self.j]
+                # Computation of the local field temperature at the agent's position considering thermogenesis. 
+                # This thermogenesis temperature will stay constant until the agent leaves the thermogenesis state.
+                self.activate_temp = self.compute_activate_temp() + tempField[self.i,self.j]
+                beeGrid_thermo[self.i,self.j] = self.activate_temp 
                 
         if self.thermogenesis == True:
-            beeGrid_thermo[self.i,self.j] = self.activate_temp + tempField[self.i,self.j]
             self.thermo_iter = self.thermo_iter + 1
             if self.thermo_iter >= self.iter_activate:
-                #random draw with a probability prob_deactivate to deactivate thermogenesis
+                #Random draw with a probability prob_deactivate to leave thermogenesis state
                 deactive = np.random.choice([True,False],p=[self.prob_deactivate,1-self.prob_deactivate])
                 if deactive:
+                    # Agent enters in passive state.
                     self.thermogenesis = False
-                    beeGrid_thermo[self.i,self.j] = 0
                     self.thermo_iter = 0
-
+                else:
+                    beeGrid_thermo[self.i,self.j] = self.activate_temp
     def update(self,tempField,beeGrid,beeGrid_2nd, beeGrid_thermo, n_bees):
         """Update of the agent state and position."""
         if tempField[self.i,self.j]<Bee.Tcoma:

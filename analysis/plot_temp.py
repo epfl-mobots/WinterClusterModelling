@@ -300,3 +300,42 @@ def plot_combined(srcDir, cfg):
         plt.clf() 
         plt.close('all')   
         gc.collect()
+
+def plot_active_population(srcDir):
+    """ Plots active bee's number for all iterations stored in srcDir. 
+    Plots are saved in the "analysis" then "population" subfolders.
+    param srcDir: path to the directory containing the data (containging frame.obj)
+    """
+    
+    #if not os.path.isdir(srcDir+"/analysis"):
+        #os.mkdir(srcDir+"/analysis")
+    
+    if not os.path.isdir(srcDir+"/analysis/population"):
+        os.mkdir(srcDir+"/analysis/population")
+    outDir = srcDir+"/analysis/population"
+
+    f = open(srcDir+"/frame.obj", "rb")
+    frame_save = pickle.load(f)
+    f.close()
+    
+    # Get number of active bees
+    actives = frame_save.active_bee_list
+
+    iterations = np.linspace(0,len(actives),len(actives))
+    iterations = np.asarray(iterations)
+    mean = np.full(iterations.shape, np.mean(actives))
+    
+    #Plot of active population
+    plt.figure()
+    plt.plot(iterations, actives, color='blue', label='Active bees')
+    plt.plot(iterations, mean, color='red', label='Mean')
+    plt.xlabel('Iterations')
+    plt.ylabel('Number of bees')
+    plt.legend()
+    plt.savefig(outDir+"/Active_pop")
+
+    # Close figure, clear everything
+    plt.cla() 
+    plt.clf() 
+    plt.close('all')   
+    gc.collect()

@@ -26,6 +26,7 @@ class Frame:
         self.hq20 = cfg.getfloat('hive','hq20')
         self.gamma = cfg.getfloat('hive','gamma')
         self.Kp =  cfg.getfloat('hive','Kp')
+        self.dim_scaling =  cfg.getfloat('hive','3D_scaling')
         self.RealisticFrame = cfg.getboolean('hotspot','RealisticFrame')
         self.dims_b = list(ast.literal_eval(cfg.get('FreeFrame','dims_b')))
         self.outside = cfg.getfloat('RealisticFrame','outside')
@@ -139,7 +140,8 @@ class Frame:
         #Colony initialisation
         self.n_bees = cfg.getint('hive','n_bees')
         self.beeGrid = np.zeros(self.dims_b)                # Grid of bees
-        self.beeGrid_thermo = np.full(self.dims_b, 0)      
+        self.beeGrid_thermo = np.full(self.dims_b, 0)       # Grid of thermogenesis local temperatures
+        self.active_bee_list = list()                       #List to contain the number of active bees.
         self.colony = np.asarray(self.init_colony(self.n_bees,cfg.get('hive','init_shape'),cfg['bee'])) #List of bees
         if self.n_bees>0:
             self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
@@ -295,16 +297,18 @@ class Frame:
     def f(self,i,j, diffusion):
         """Compute the metabolic temperature contribution of the agent at position (i,j).
         Returns 0 if no agent is at this position.
+        Returns the agent's thermogenesis temperature if the agent is in the active state and its thermogenesis 
+        temperature is higher than diffusion value computed in "test_diff". 
+        Returns a boolean value characterizing the agent's shivering state. 
         """
         f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
         shivering = False
-        test_diff = diffusion + self.tempField[i,j] + f_ij
+        test_diff = diffusion + self.tempField[i,j]
         
         if self.beeGrid_thermo[i//self.g,j//self.g] != 0 and test_diff<self.beeGrid_thermo[i//self.g,j//self.g]:
             f_ij = self.beeGrid_thermo[i//self.g,j//self.g]
             shivering = True
-            
-        #Threshold only without shivering
+        # Temperature threshold
         #elif f_ij > self.hq20*np.exp(self.gamma*(self.max_temp-20)):
             #f_ij= self.hq20*np.exp(self.gamma*(self.max_temp-20))   
         return f_ij, shivering
@@ -313,7 +317,7 @@ class Frame:
         """Compute the diffusion term in the temperature equation for position (i,j).
             Lij=La-Pij*(La-Lb) --> We first compute Pij
         """
-        d, lamdas_aug = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
+        d, d_3D, diffusion,lamdas_aug = np.zeros(self.dims_temp), np.zeros(self.dims_temp), np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         lambdas_isup, lambdas_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         lambdas_jsup, lambdas_jinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         tempfield_isup, tempfield_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
@@ -333,10 +337,14 @@ class Frame:
         tempfield_jinf = np.roll(self.tempField, -1, axis=1) - self.tempField
         
         neighbors = np.multiply(lambdas_isup, tempfield_isup) + np.multiply(lambdas_iinf, tempfield_iinf) + np.multiply(lambdas_jsup, tempfield_jsup) + np.multiply(lambdas_jinf, tempfield_jinf)
-        d_3D= (2/500*self.l_air)*(self.Tamb-self.tempField)
+        d_3D= (self.dim_scaling*self.l_air)*(self.Tamb-self.tempField)
         neighbors = neighbors + d_3D
         d = np.multiply(lamdas_aug, neighbors)
-        return d/5
+        if self.dim_scaling == 0:
+            diffusion = d/4
+        else:
+            diffusion = d/5
+        return diffusion
 
     def h(self,i,j):
         """Checks whether position (i,j) is within the boundaries of the hotspot."""
@@ -378,6 +386,14 @@ class Frame:
         """Update the Frame state. Called at each timestep.
         - count is the iteration number
         """
+        
+        #Compute the temperature felt by the agents and update them
+        self.compute_Tbee()
+        idxs = np.arange(self.colony.size)
+        np.random.shuffle(idxs)
+        for i in idxs:
+            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd, self.beeGrid_thermo, self.n_bees)
+            
         if self.RealisticFrame == False:
             if self.hot_used: # Hotspot management
                 if self.hotspot_on==count:
@@ -402,12 +418,6 @@ class Frame:
         self.meanT.append(np.mean(self.tempField))
         self.sigT.append(np.std(self.tempField))
         
-        #Compute the temperature felt by the agents and update them
-        self.compute_Tbee()
-        idxs = np.arange(self.colony.size)
-        np.random.shuffle(idxs)
-        for i in idxs:
-            self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd, self.beeGrid_thermo, self.n_bees)
         
         #Saving state
         if self.n_bees>0:
@@ -418,7 +428,7 @@ class Frame:
         self.tempField_save.append(self.tempField.copy())
         self.bgs_save.append(self.beeGrid.copy())
         self.bgs2_save.append(self.beeGrid_2nd.copy())
-        
+        self.active_bee_list.append(np.count_nonzero(self.beeGrid_thermo))
     
     def compute_Tbee(self):
         """Compute local average of temperature at each possible agent position."""

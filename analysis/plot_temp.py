@@ -301,41 +301,48 @@ def plot_combined(srcDir, cfg):
         plt.close('all')   
         gc.collect()
 
-def plot_active_population(srcDir):
+def plot_active_population(srcDir, cfg):
     """ Plots active bee's number for all iterations stored in srcDir. 
     Plots are saved in the "analysis" then "population" subfolders.
     param srcDir: path to the directory containing the data (containging frame.obj)
+    param cfg: ConfigParser object containing the configuration of the simulation
     """
-    
-    #if not os.path.isdir(srcDir+"/analysis"):
-        #os.mkdir(srcDir+"/analysis")
     
     if not os.path.isdir(srcDir+"/analysis/population"):
         os.mkdir(srcDir+"/analysis/population")
     outDir = srcDir+"/analysis/population"
-
+    
+    
     f = open(srcDir+"/frame.obj", "rb")
     frame_save = pickle.load(f)
     f.close()
-    
-    # Get number of active bees
-    actives = frame_save.active_bee_list
 
+    actives = frame_save.active_bee_list
+    passives = list()
+    n_bees = cfg.getfloat('hive','n_bees')
+    for active in actives:  
+        passive = n_bees - active
+        passives.append(passive)
+        
     iterations = np.linspace(0,len(actives),len(actives))
     iterations = np.asarray(iterations)
-    mean = np.full(iterations.shape, np.mean(actives))
+    mean= np.full(iterations.shape, np.mean(passives))
     
-    #Plot of active population
+    
+    #Plotting bar plot of active population
     plt.figure()
-    plt.plot(iterations, actives, color='blue', label='Active bees')
-    plt.plot(iterations, mean, color='red', label='Mean')
+    #plt.yscale('log')
+    plt.bar(iterations, passives, color='red', label='Passive bees', width = 1)
+    plt.bar(iterations, actives, color='blue', label='Active bees', bottom = passives, width = 1)
+    plt.plot(iterations, mean, color='black', linestyle='--' ,label='Mean')
     plt.xlabel('Iterations')
     plt.ylabel('Number of bees')
     plt.legend()
-    plt.savefig(outDir+"/Active_pop")
+    plt.savefig(outDir+"/active_pop")
 
     # Close figure, clear everything
     plt.cla() 
     plt.clf() 
     plt.close('all')   
     gc.collect()
+    

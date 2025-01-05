@@ -141,7 +141,7 @@ def plot_combined_old(srcDir):
 
         # computing area to shade
         idxs_up = max_temps>18
-        idxs_down = max_temps<23
+        idxs_down = max_temps<25
         idxs_comf = np.nonzero(idxs_up & idxs_down)[0]
 
         #plotting curve of temperature across i of bee centroid position
@@ -256,7 +256,7 @@ def plot_combined(srcDir, cfg):
         os.mkdir(srcDir+"/analysis/combined")
     outDir = srcDir+"/analysis/combined"
     
-    iterations = range(0,len(temp_field)-1,25)
+    iterations = range(0,len(temp_field),25)
     
     for iteration in tqdm(iterations):
         #computing bee positions
@@ -302,8 +302,8 @@ def plot_combined(srcDir, cfg):
         gc.collect()
 
 def plot_active_population(srcDir, cfg):
-    """ Plots active bee's number for all iterations stored in srcDir. 
-    Plots are saved in the "analysis" then "population" subfolders.
+    """ Plots active and passive bee's number for all iterations stored in srcDir. 
+    Plots are saved in the "population" subfolders inside the "analysis" folder.
     param srcDir: path to the directory containing the data (containging frame.obj)
     param cfg: ConfigParser object containing the configuration of the simulation
     """
@@ -312,7 +312,6 @@ def plot_active_population(srcDir, cfg):
         os.mkdir(srcDir+"/analysis/population")
     outDir = srcDir+"/analysis/population"
     
-    
     f = open(srcDir+"/frame.obj", "rb")
     frame_save = pickle.load(f)
     f.close()
@@ -320,6 +319,7 @@ def plot_active_population(srcDir, cfg):
     actives = frame_save.active_bee_list
     passives = list()
     n_bees = cfg.getfloat('hive','n_bees')
+    
     for active in actives:  
         passive = n_bees - active
         passives.append(passive)
@@ -329,12 +329,12 @@ def plot_active_population(srcDir, cfg):
     mean= np.full(iterations.shape, np.mean(passives))
     
     
-    #Plotting bar plot of active population
+    #Plotting a bar plot of active and passive population
     plt.figure()
     #plt.yscale('log')
     plt.bar(iterations, passives, color='red', label='Passive bees', width = 1)
     plt.bar(iterations, actives, color='blue', label='Active bees', bottom = passives, width = 1)
-    plt.plot(iterations, mean, color='black', linestyle='--' ,label='Mean')
+    plt.plot(iterations, mean, color='black', linestyle='--' ,label='Passive bees mean')
     plt.xlabel('Iterations')
     plt.ylabel('Number of bees')
     plt.legend()

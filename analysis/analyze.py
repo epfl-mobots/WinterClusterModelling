@@ -23,7 +23,6 @@ cfg_path = glob.glob(dir+"../config*")[0]
 cfg = ConfigParser()
 cfg.read(cfg_path)
 
-# Comment the unwanted function
-#plot_combined(dir,cfg)
+plot_combined(dir,cfg)
 plot_active_population(dir,cfg)
     

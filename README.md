@@ -1,8 +1,16 @@
 # WinterClusterModelling
-Winter Cluster Modelling: Semester project carried out during the Spring 2023 semester by Louise Genoud, under the supervision of Dr Rob Mills and Cyril Monette.
+This code has been build during two semester projects, the first being carried out Spring 2023 by Louise Genoud under the supervision of Dr Rob Mills and Cyril Monette, the second carried out by Clara Wetzel in Automn 2024 under the supervision of Cyril Monette.
 
 ## Structure and description
-The up-to-date version of the project is on the __explore__ branch. The __main__ branch is an out-of-date version of the Sumpter & Broomhead model replication, and the other branches are tests.
+The up-to-date version of the project is on the __shivering__ branch. This branch needs to be run with a config file having a similar layout than "sumpter_new.cfg", and gives the option of activating shivering thermogenesis, explorer behaviors hypothesis and 3D diffusion. Also, the code's output can be chosen to be given in a relalistic or free frame.
+
+The __TempExp__  branch can be used to characterize and plot the error occuring when temperatures become too high, creating infinite value resulting in an error in the simulation.
+
+The __Sumpter__  branch contains the more recent version of the code containing only Sumpter hypothesis and the implementation of the explorer behaviour coded by Louise Genoud.
+
+The __explore__ branch is an out of date version of the explorer behavior.
+
+The __main__ branch is an out-of-date version of the Sumpter & Broomhead model replication, and the other branches are tests.
 
 The file structure is the following :
 
@@ -14,16 +22,18 @@ WinterClusterModelling
 │   ├── __init__.py
 │   ├── analyze.py
 │   └── plot_temp.py
+├── Development
+│   └── parameters.ipynb
 ├── annotation
 │   ├── annotate.py
 │   ├── compute_surf.py
 │   ├── surf_annotate.py
 │   └── surf_ellipse.py
-└── sumpter
+└── src
     ├── __init__.py
     ├── bee.py
     ├── draw.py
-    ├── hive.py
+    ├── frame.py
     ├── main.py
     └── sim.py
 
@@ -37,12 +47,14 @@ The __annotation__ subfolder contains tools to perfom frame annotation from vide
 - surf_annotate.py and surf_ellipse.py : frame-by-frame annotation of cluster surfaces with ellipses
 - compute_surf.py : computation of cluster surfaces from results of annotation with surf_annotate or surf_ellipse
 
-The __sumpter__ subfolder contains the model definition and scripts to run simulations.
+The __src__ subfolder contains the model definition and scripts to run simulations.
 - main.py : script to initiate simulations
 - sim.py : definition of the Sim class handling the update of the Hive and graphics, as well as saving
-- hive.py : definition of the Hive class
+- frame.py : definition of the Frame class
 - bee.py : definition of the Bee (agent) class
 - draw.py : function definitions for graphics rendering
+
+The __Development__ subfolder contains the file "parameters.ipynb" which can be used to compute some parameters used in functions related to the implementation of shivering thermogenesis. These parameters needs to be recomputed and modified in the cfg file if the probability of leaving the active state or if the coma temperature parameters are changed.
 
 ## Required libraries
 - cv2

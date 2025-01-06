@@ -315,17 +315,19 @@ class Frame:
     
     def diff(self, lamdas):
         """Compute the diffusion term in the temperature equation for position (i,j).
-            Lij=La-Pij*(La-Lb) --> We first compute Pij
+            Based on the diffusion equation presented in Sumpter et al. (2000).
         """
         d, d_3D, diffusion,lamdas_aug = np.zeros(self.dims_temp), np.zeros(self.dims_temp), np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         lambdas_isup, lambdas_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         lambdas_jsup, lambdas_jinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         tempfield_isup, tempfield_iinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
         tempfield_jsup, tempfield_jinf = np.zeros(self.dims_temp), np.zeros(self.dims_temp)
-        #calculate lamda matrix in dimension of temperature grid
+        #Modify the lamda matrix to obtain the same dimension as in the temperature grid
         for i in range(self.dims_temp[0]):
             lamdas_row = np.repeat(lamdas[i//2, :], 2)
             lamdas_aug[i:i+1, :] = lamdas_row
+            
+        # Compute the matrix characterizing each neighbor
         lambdas_isup = np.roll(lamdas_aug, 1, axis=0)
         lambdas_iinf = np.roll(lamdas_aug, -1, axis=0)
         lambdas_jsup = np.roll(lamdas_aug, 1, axis=1)
@@ -341,8 +343,10 @@ class Frame:
         neighbors = neighbors + d_3D
         d = np.multiply(lamdas_aug, neighbors)
         if self.dim_scaling == 0:
+            # Diffusion calculated in 2D
             diffusion = d/4
         else:
+            # Diffusion calculated in 3D
             diffusion = d/5
         return diffusion
 
@@ -370,10 +374,11 @@ class Frame:
                     self.tempField[i,j] += diffusion_term[i,j] + heating
    
     def update_temp_border(self, count):
-        """Update the temperature field for the border of the grid."""
-        for dict_key in self.dict_Tamb.keys():
-            if self.dict_Tamb[dict_key]['beginning'] == count:
-                self.Tobj = self.dict_Tamb[dict_key]['Temperature']
+        """Update the temperature field at the border of the grid."""
+        for keys in self.dict_Tamb.keys():
+            if self.dict_Tamb[keys]['beginning'] == count:
+                self.Tobj = self.dict_Tamb[keys]['Temperature']
+        # Equation controling ambient temperature change
         self.Tamb += (self.Tobj - self.Tamb)*self.Kp
         for i in range(self.dims_temp[0]):
             self.tempField[i,0] = self.Tamb

@@ -125,7 +125,7 @@ class Bee:
     
     def compute_activate_temp(self):
         """Compute the shivering temperature based on a probability distribution 
-        approximating the shivering presented in Stabentheiner 2003.
+        approximating the shivering presented in Stabentheiner et al. (2003).
         Method inspired from: https://stackoverflow.com/questions/66874819/random-numbers-with-user-defined-continuous-probability-distribution 
         """
         

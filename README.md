@@ -4,7 +4,15 @@ Winter Cluster Modelling: an agent-based model to model honeybee cluster movemen
 Model initated as an EPFL semester project carried out by Louise Genoud (Spring 2023), under the supervision of Dr Rob Mills and Cyril Monette. The model was further developed by Clara Wetzel in another EPFL semester project (Fall 2024).
 
 # Structure and description
-The up-to-date version of the project is on the __explore__ branch. The __main__ branch is an out-of-date version of the Sumpter & Broomhead model replication, and the other branches are tests.
+The up-to-date version of the project is on the __shivering__ branch. This branch needs to be run with a config file having a similar layout than "sumpter_new.cfg", and gives the option of activating shivering thermogenesis, explorer behaviors hypothesis and 3D diffusion. Also, the code's output can be chosen to be given in a relalistic or free frame.
+
+The __TempExp__  branch can be used to characterize and plot the error occuring when temperatures become too high, creating infinite value resulting in an error in the simulation.
+
+The __Sumpter__  branch contains the more recent version of the code containing only Sumpter hypothesis and the implementation of the explorer behaviour coded by Louise Genoud.
+
+The __explore__ branch is an out of date version of the explorer behavior.
+
+The __main__ branch is an out-of-date version of the Sumpter & Broomhead model replication, and the other branches are tests.
 
 The file structure is the following :
 
@@ -16,6 +24,8 @@ WinterClusterModelling
 │   ├── __init__.py
 │   ├── analyze.py
 │   └── plot_temp.py
+├── Development
+│   └── parameters.ipynb
 ├── annotation
 │   ├── annotate.py
 │   ├── compute_surf.py
@@ -45,6 +55,8 @@ The __sumpter__ subfolder contains the model definition and scripts to run simul
 - hive.py : definition of the Hive class
 - bee.py : definition of the Bee (agent) class
 - draw.py : function definitions for graphics rendering
+
+The __Development__ subfolder contains the file "parameters.ipynb" which can be used to compute some parameters used in functions related to the implementation of shivering thermogenesis. These parameters needs to be recomputed and modified in the cfg file if the probability of leaving the active state or if the coma temperature parameters are changed.
 
 # Requirements
 - cv2

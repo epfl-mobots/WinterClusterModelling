@@ -1,7 +1,9 @@
-# WinterClusterModelling
-Winter Cluster Modelling: Semester project carried out during the Spring 2023 semester by Louise Genoud, under the supervision of Dr Rob Mills and Cyril Monette.
+# Introduction
+Winter Cluster Modelling: an agent-based model to model honeybee cluster movements and thermal gradients. Based on [1] and further developed to include shivering [2] with the goal of testing winter cluster transitions as observed by [3].
 
-## Structure and description
+Model initated as an EPFL semester project carried out by Louise Genoud (Spring 2023), under the supervision of Dr Rob Mills and Cyril Monette. The model was further developed by Clara Wetzel in another EPFL semester project (Fall 2024).
+
+# Structure and description
 The up-to-date version of the project is on the __explore__ branch. The __main__ branch is an out-of-date version of the Sumpter & Broomhead model replication, and the other branches are tests.
 
 The file structure is the following :
@@ -44,7 +46,7 @@ The __sumpter__ subfolder contains the model definition and scripts to run simul
 - bee.py : definition of the Bee (agent) class
 - draw.py : function definitions for graphics rendering
 
-## Required libraries
+# Requirements
 - cv2
 - datetime
 - gc
@@ -58,3 +60,11 @@ The __sumpter__ subfolder contains the model definition and scripts to run simul
 - sys
 
 Developed on Python 3.9
+
+# References
+
+[1] D. Sumpter and D. Broomhead, “Shape and dynamics of thermoregulating honey bee clusters,” Journal of Theoretical Biology, vol. 204, pp. 1–14, May 2000.
+
+[2] A. Stabentheiner, H. Pressl, T. Papst, N. Hrassnigg, and K. Crailsheim, “Endothermic heat production in honeybee winter clusters,” Journal of Experimental Biology, vol. 206, pp. 353–358, Jan. 2003.
+
+[3] R. Barmak, M. Stefanec, D. N. Hofstadler, L. Piotet, S. Sch ̈onwetter-Fuchs-Schistek, F. Mondada, T. Schmickl, and R. Mills, “A robotic honeycomb for interaction with a honeybee colony,” Science Robotics, vol. 8, no. 76, 2023.

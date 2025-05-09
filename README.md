@@ -58,7 +58,7 @@ The __src__ subfolder contains the model definition and scripts to run simulatio
 
 The __Development__ subfolder contains the file "parameters.ipynb" which can be used to compute some parameters used in functions related to the implementation of shivering thermogenesis. These parameters needs to be recomputed and modified in the cfg file if the probability of leaving the active state or if the coma temperature parameters are changed.
 
-## Required libraries
+# Requirements
 - cv2
 - datetime
 - gc

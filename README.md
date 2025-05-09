@@ -1,7 +1,9 @@
-# WinterClusterModelling
-This code has been build during two semester projects, the first being carried out Spring 2023 by Louise Genoud under the supervision of Dr Rob Mills and Cyril Monette, the second carried out by Clara Wetzel in Automn 2024 under the supervision of Cyril Monette.
+# Introduction
+Winter Cluster Modelling: an agent-based model to model honeybee cluster movements and thermal gradients. Based on [1] and further developed to include shivering [2] with the goal of testing winter cluster transitions as observed by [3].
 
-## Structure and description
+Model initated as an EPFL semester project carried out by Louise Genoud (Spring 2023), under the supervision of Dr Rob Mills and Cyril Monette. The model was further developed by Clara Wetzel in another EPFL semester project (Fall 2024).
+
+# Structure and description
 The up-to-date version of the project is on the __shivering__ branch. This branch needs to be run with a config file having a similar layout than "sumpter_new.cfg", and gives the option of activating shivering thermogenesis, explorer behaviors hypothesis and 3D diffusion. Also, the code's output can be chosen to be given in a relalistic or free frame.
 
 The __TempExp__  branch can be used to characterize and plot the error occuring when temperatures become too high, creating infinite value resulting in an error in the simulation.
@@ -70,3 +72,11 @@ The __Development__ subfolder contains the file "parameters.ipynb" which can be 
 - sys
 
 Developed on Python 3.9
+
+# References
+
+[1] D. Sumpter and D. Broomhead, “Shape and dynamics of thermoregulating honey bee clusters,” Journal of Theoretical Biology, vol. 204, pp. 1–14, May 2000.
+
+[2] A. Stabentheiner, H. Pressl, T. Papst, N. Hrassnigg, and K. Crailsheim, “Endothermic heat production in honeybee winter clusters,” Journal of Experimental Biology, vol. 206, pp. 353–358, Jan. 2003.
+
+[3] R. Barmak, M. Stefanec, D. N. Hofstadler, L. Piotet, S. Sch ̈onwetter-Fuchs-Schistek, F. Mondada, T. Schmickl, and R. Mills, “A robotic honeycomb for interaction with a honeybee colony,” Science Robotics, vol. 8, no. 76, 2023.

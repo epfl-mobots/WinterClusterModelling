@@ -294,22 +294,26 @@ class Frame:
             self.tempField[a[0]:a[1],b[0]:b[1]] = self.Tspot
                     
     def f(self,i,j, diffusion):
-        """Compute the metabolic temperature contribution of the agent at position (i,j).
-        Returns 0 if no agent is at this position.
+        """Compute the metabolic temperature contribution or shivering temperature of the agent at position (i,j).
+        Returns f_ij = 0 if no agent is at this position or agent in coma state.
         Returns the agent's thermogenesis temperature if the agent is in the active state and its thermogenesis 
-        temperature is higher than diffusion value computed in "test_diff". 
-        Returns a boolean value characterizing the agent's shivering state. 
+        temperature is higher than diffusion value computed in "test_diff".
+        Returns a boolean value characterizing the agent's shivering state.
         """
-        f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20)) if (self.beeGrid[i//self.g,j//self.g]!=FREE) else 0
+        if self.beeTempField[i//self.g,j//self.g] < Bee.Tcoma:
+            f_ij = 0
+        elif self.beeGrid[i//self.g,j//self.g]==FREE:
+            f_ij = 0
+        elif self.beeGrid[i//self.g,j//self.g]==STAT or self.beeGrid[i//self.g,j//self.g]==MOV:
+            f_ij = self.hq20*np.exp(self.gamma*(self.beeTempField[i//self.g,j//self.g]-20))
+        
         shivering = False
         test_diff = diffusion + self.tempField[i,j]
         
         if self.beeGrid_thermo[i//self.g,j//self.g] != 0 and test_diff<self.beeGrid_thermo[i//self.g,j//self.g]:
             f_ij = self.beeGrid_thermo[i//self.g,j//self.g]
             shivering = True
-        # Temperature threshold
-        #elif f_ij > self.hq20*np.exp(self.gamma*(self.max_temp-20)):
-            #f_ij= self.hq20*np.exp(self.gamma*(self.max_temp-20))   
+  
         return f_ij, shivering
     
     def diff(self, lamdas):
@@ -391,14 +395,16 @@ class Frame:
         - count is the iteration number
         """
         
-        #Compute the temperature felt by the agents and update them
+        #Compute the temperature felt by the agents
         self.compute_Tbee()
+
+        # Update the agents
         idxs = np.arange(self.colony.size)
         np.random.shuffle(idxs)
         for i in idxs:
             self.colony[i].update(self.beeTempField,self.beeGrid,self.beeGrid_2nd, self.beeGrid_thermo, self.n_bees)
             
-        if self.RealisticFrame == False:
+        if not self.RealisticFrame:
             if self.hot_used: # Hotspot management
                 if self.hotspot_on==count:
                     self.set_hotspot()

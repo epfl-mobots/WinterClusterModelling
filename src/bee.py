@@ -107,13 +107,18 @@ class Bee:
         else:
             return Bee.prob_tr
     
-    def compute_prob_activate(self, tempField, beeGrid_thermo, n_bees):
+    def compute_prob_activate(self, tempField):
         """Compute the probability of an agent starting thermogenesis shivering based on the ratio
         between its local temperature and the maximum temperature inside the field."""
-        if np.max(tempField) == tempField[0,0] or abs(tempField[self.i,self.j]-tempField[0,0])<10^(-10):
+        # If the temperature is below Tcoma, the bee cannot activate thermogenesis
+        if tempField[self.i,self.j] < Bee.Tcoma:
+            return 0
+        
+        Tamb = np.min(tempField)
+        if np.max(tempField) == Tamb or tempField[self.i,self.j]-Tamb<10^(-10):
             ratio_temp = 0
         else:
-            ratio_temp = (tempField[self.i,self.j] - tempField[0,0])/(np.max(tempField)-tempField[0,0])
+            ratio_temp = (tempField[self.i,self.j] - max(Tamb,Bee.Tcoma))/(np.max(tempField)-max(Tamb,Bee.Tcoma))
 
         proba_activate = Bee.activate_params[0]*np.exp(Bee.activate_params[1]*ratio_temp)
         
@@ -206,7 +211,7 @@ class Bee:
         ## ACTIONS according to state
         if self.state == 'sumpter':
             beeGrid[self.i,self.j]=FREE
-            beeGrid_thermo[self.i,self.j] = 0
+            beeGrid_thermo[self.i,self.j] = 0 # reset the thermogenesis temperature locally. Might be (re)activated later if the bee enters/stays in thermogenesis state.
 
             xy_TI = [] # positions within reachable range that are within [TminI;TmaxI]
             xy_free = [] # other positions within reachable range

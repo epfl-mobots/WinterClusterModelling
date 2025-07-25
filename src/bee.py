@@ -4,7 +4,7 @@ import numpy as np
 import ast
 import math
 
-# constants describing the beeGrid state
+# constants describing states on a beeGrid
 FREE = 0
 STAT = 1
 MOV = 2
@@ -26,8 +26,8 @@ def initBeeBehaviour(_bee_param, bee_xmax, bee_ymax):
         Bee.prob_tr = float(_bee_param['alpha'])
         Bee.max_bounce = int(_bee_param['max_bounce'])
         
-    Bee.Thermogenese = bool(_bee_param["Thermogenese"])
-    if Bee.Thermogenese == True :
+    Bee.Thermogenesis = bool(_bee_param["Thermogenesis"])
+    if Bee.Thermogenesis == True :
         Bee.activate_params = list(ast.literal_eval(_bee_param["activate_params"]))
         Bee.proba_temp_params = list(ast.literal_eval(_bee_param["proba_temp_params"]))
         Bee.prob_deactivate = float(_bee_param['alpha_deactivate'])
@@ -117,7 +117,7 @@ class Bee:
 
         proba_activate = Bee.activate_params[0]*np.exp(Bee.activate_params[1]*ratio_temp)
         
-        # Set NAN exceptions to zeros
+        # Set NaN exceptions to zeros
         if math.isnan(proba_activate):
             proba_activate = 0
 
@@ -164,6 +164,7 @@ class Bee:
                     self.thermo_iter = 0
                 else:
                     beeGrid_thermo[self.i,self.j] = self.activate_temp
+    
     def update(self,tempField,beeGrid,beeGrid_2nd, beeGrid_thermo, n_bees):
         """Update of the agent state and position."""
         if tempField[self.i,self.j]<Bee.Tcoma:
@@ -243,7 +244,7 @@ class Bee:
                         self.i = xy_free[idx][0]
                         self.j = xy_free[idx][1]
             
-            if Bee.Thermogenese == True:
+            if Bee.Thermogenesis == True:
                 self.compute_thermogenesis(beeGrid_thermo, tempField, n_bees)
             
             # update beeGrid with the new position (and if bee is static or moved)

@@ -177,10 +177,10 @@ def plot_combined_hive(srcDir):
     frame_save = pickle.load(f)
     f.close()
 
-    bg = frame_save.bgs_save 
-    bg_2 = frame_save.bgs2_save
+    bg = frame_save.bgs_history 
+    bg_2 = frame_save.bgs2_history
     bg = np.array(bg[1:])
-    temp_field = np.array(frame_save.tempField_save)
+    temp_field = np.array(frame_save.tempField_history)
     
 
     if not os.path.isdir(srcDir+"/analysis/combined"):
@@ -246,11 +246,10 @@ def plot_combined(srcDir, cfg):
     frame_save = pickle.load(f)
     f.close()
 
-    bg = frame_save.bgs_save 
-    bg_2 = frame_save.bgs2_save
+    bg = frame_save.bgs_history
+    bg_2 = frame_save.bgs2_history
     #bg = np.array(bg[1:]) # Not sure why this was done
-    temp_field = np.array(frame_save.tempField_save)
-    
+    temp_field = np.array(frame_save.tempField_history)
 
     if not os.path.isdir(srcDir+"/analysis/combined"):
         os.mkdir(srcDir+"/analysis/combined")

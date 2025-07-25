@@ -117,15 +117,15 @@ class Sim:
             os.mkdir(pat)
         pat = pat+'/'
         f = open(pat+"beeGrid.obj", "wb")
-        pickle.dump(self.frame.bg_save,f)
+        pickle.dump(self.frame.bg_history,f)
         f.close()
 
         f = open(pat+"beeGrid_2nd.obj", "wb")
-        pickle.dump(self.frame.bg2_save,f)
+        pickle.dump(self.frame.bg2_history,f)
         f.close()
 
         f = open(pat+"T_field.obj", "wb")
-        pickle.dump(self.frame.tempField_save,f)
+        pickle.dump(self.frame.tempField_history,f)
         f.close()
 
         f = open(pat+"Tc.obj", "wb")

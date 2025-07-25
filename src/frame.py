@@ -128,8 +128,7 @@ class Frame:
             self.hot_used=False
             self.hot_on=False
 
-        #History of temperature field at every timestep
-        self.tempField_save = [self.tempField]
+        self.tempField_history = [self.tempField]              #History of temperature field at every timestep
         self.beeTempField = self.Tamb*np.ones(self.dims_b) # T° field for bees
         self.Tmax = [self.Tamb]                            # History of max T°
         self.Tcs = [self.Tamb]                            # History of T° at centroid
@@ -147,11 +146,11 @@ class Frame:
             self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         else:
             self.centroid = [0,0]
-        self.bgs_save = [self.beeGrid.copy()]
+        self.bgs_history = [self.beeGrid.copy()]
 
         #2nd layer of beeGrid for bees in 'leave' state
         self.beeGrid_2nd = np.zeros(self.dims_b)
-        self.bgs2_save = [self.beeGrid_2nd.copy()]
+        self.bgs2_history = [self.beeGrid_2nd.copy()]
 
 
     def init_colony(self,_n_bees,_init_shape,_bee_param):
@@ -423,16 +422,15 @@ class Frame:
         self.meanT.append(np.mean(self.tempField))
         self.sigT.append(np.std(self.tempField))
         
-        
         #Saving state
         if self.n_bees>0:
             self.centroid = np.mean(np.argwhere(self.beeGrid),axis=0)
         else:
             self.centroid = [0,0]
         self.Tcs.append(self.beeTempField[int(self.centroid[0]),int(self.centroid[1])])
-        self.tempField_save.append(self.tempField.copy())
-        self.bgs_save.append(self.beeGrid.copy())
-        self.bgs2_save.append(self.beeGrid_2nd.copy())
+        self.tempField_history.append(self.tempField.copy())
+        self.bgs_history.append(self.beeGrid.copy())
+        self.bgs2_history.append(self.beeGrid_2nd.copy())
         self.active_bee_list.append(np.count_nonzero(self.beeGrid_thermo))
     
     def compute_Tbee(self):

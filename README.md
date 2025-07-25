@@ -6,7 +6,7 @@ Model initated as an EPFL semester project carried out by Louise Genoud (Spring 
 <img src=images/overview.png width=600 position=centered>
 
 # Structure and description
-The up-to-date version of the project is on the __shivering__ branch. This branch needs to be run with a config file having a similar layout than "sumpter_new.cfg", and gives the option of activating shivering thermogenesis, explorer behaviors hypothesis and 3D diffusion. Also, the code's output can be chosen to be given in a relalistic or free frame.
+The up-to-date version of the project is on the __shivering__ branch. This branch needs to be run with a config file having a similar layout than "sumpter_new.cfg", and gives the option of activating shivering thermogenesis, explorer behaviors hypothesis and 3D diffusion. Also, the code's output can be chosen to be given in a realistic or free frame.
 
 The __TempExp__  branch can be used to characterize and plot the error occuring when temperatures become too high, creating infinite value resulting in an error in the simulation.
 
